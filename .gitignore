@@ -216,3 +216,18 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# macOS
+.DS_Store
+
+# Environment variables and credentials
+.env
+.env.*
+*.env
+
+# Downloaded and intermediate data
+data/raw/
+data/interim/
+
+# Local caches
+.cache/
