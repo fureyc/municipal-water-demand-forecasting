@@ -1,0 +1,160 @@
+# ============================================================
+# Data-source configuration
+# ============================================================
+#
+# This file identifies external data sources and controls
+# acquisition behavior. It should not contain API tokens,
+# passwords, or other secrets.
+
+config_version: 1
+
+project:
+  name: "Fort Collins Daily Water Demand"
+  timezone: "America/Denver"
+
+  paths:
+    raw_data_dir: "data/raw"
+    interim_data_dir: "data/interim"
+    processed_data_dir: "data/processed"
+
+  downloads:
+    overwrite_existing: false
+    save_response_metadata: true
+    create_timestamped_snapshots: true
+
+
+# ============================================================
+# External data sources
+# ============================================================
+
+sources:
+
+  # ----------------------------------------------------------
+  # City of Fort Collins treated-water demand
+  # ----------------------------------------------------------
+  water_demand:
+    provider: "City of Fort Collins Utilities"
+    dataset_name: "City of Fort Collins Water Demand"
+
+    description: >-
+      Daily City of Fort Collins treated-water demand,
+      reported in millions of gallons per day. Values are
+      provisional unless otherwise specified.
+
+    frequency: "daily"
+    provisional: true
+
+    source_migration:
+      legacy_platform: "Socrata"
+      legacy_dataset_id: "ia5t-gxxe"
+      legacy_portal_discontinued: true
+      legacy_portal_discontinued_date: "2026-06-30"
+
+      replacement_platform: "ArcGIS Hub"
+      replacement_endpoint_status: "pending_verification"
+      replacement_endpoint: null
+
+    access:
+      selected_method: "socrata_legacy"
+      format: "csv"
+
+      socrata_legacy:
+        base_url: "https://opendata.fcgov.com"
+        resource_id: "ia5t-gxxe"
+        endpoint: >-
+          https://opendata.fcgov.com/resource/ia5t-gxxe.csv
+
+    fields:
+      date:
+        source_name: "date"
+        canonical_name: "date"
+        data_type: "datetime"
+
+      actual_demand:
+        source_name: "total_actual_demand_mgd"
+        canonical_name: "water_demand_mgd"
+        data_type: "float"
+        units: "million_gallons_per_day"
+        role: "candidate_target"
+
+      projected_demand:
+        source_name: "total_projected_demand_mgd"
+        canonical_name: "projected_water_demand_mgd"
+        data_type: "float"
+        units: "million_gallons_per_day"
+
+      actual_projected_ratio:
+        source_name: "actual_projected_demand"
+        canonical_name: "actual_projected_demand_ratio"
+        data_type: "float"
+
+      plant_demand:
+        source_name: "total_plant_demand_mgd"
+        canonical_name: "plant_demand_mgd"
+        data_type: "float"
+        units: "million_gallons_per_day"
+
+    request:
+      order_by: "date"
+      timeout_seconds: 60
+
+    output:
+      directory: "data/raw/water_demand"
+      filename: "fort_collins_water_demand.csv"
+      metadata_filename: "fort_collins_water_demand_metadata.json"
+
+
+  # ----------------------------------------------------------
+  # NOAA/NCEI daily weather observations
+  # ----------------------------------------------------------
+  noaa_weather:
+    provider: "NOAA National Centers for Environmental Information"
+    dataset_name: "Daily Summaries"
+    dataset_id: "daily-summaries"
+
+    description: >-
+      Daily station-level weather observations used to construct
+      weather covariates for water-demand modeling.
+
+    frequency: "daily"
+
+    access:
+      method: "ncei_access_data_service"
+      endpoint: >-
+        https://www.ncei.noaa.gov/access/services/data/v1
+      format: "csv"
+      units: "standard"
+
+    stations:
+      - id: "USC00053005"
+        name: "FORT COLLINS, CO US"
+        role: "primary"
+        latitude: 40.57629
+        longitude: -105.08575
+        elevation_m: 1525.2
+
+    variables:
+      required:
+        - "TMAX"
+        - "TMIN"
+        - "PRCP"
+
+      optional:
+        - "SNOW"
+        - "SNWD"
+        - "AWND"
+
+    date_range:
+      start_date: null
+      end_date: null
+
+    request:
+      include_attributes: true
+      include_station_name: true
+      include_station_location: true
+      timeout_seconds: 120
+
+    output:
+      directory: "data/raw/noaa"
+      filename_template: "noaa_daily_{station_id}.csv"
+      metadata_filename_template: "noaa_daily_{station_id}_metadata.json"
