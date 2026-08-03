@@ -144,8 +144,8 @@ sources:
         - "AWND"
 
     date_range:
-      start_date: null
-      end_date: null
+      start_date: "2020-01-01"
+      end_date: "2026-03-31"
 
     request:
       include_attributes: true
