@@ -1,0 +1,804 @@
+---
+title: "Fort Collins Water-Demand Data Audit"
+subtitle: "Acquisition, validation, coverage, and modeling-readiness review"
+author: "Colin Furey"
+date: last-modified
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show code"
+    embed-resources: true
+    theme: cosmo
+    fig-cap-location: bottom
+    tbl-cap-location: top
+jupyter: python3
+execute:
+  echo: true
+  warning: false
+  error: false
+---
+
+## Purpose
+
+This report audits the data used in the municipal water-demand forecasting
+project before model development. It verifies provenance and integrity,
+summarizes temporal and variable coverage, examines basic distributions and
+relationships, and records limitations that should guide downstream feature
+engineering and evaluation.
+
+The audit is generated from committed repository artifacts rather than from
+manually entered summary values. Re-rendering this document after the data
+pipeline changes will update its tables and figures automatically.
+
+```{python}
+#| label: setup
+#| include: false
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import yaml
+from IPython.display import Markdown, display
+
+
+def find_repository_root(start: Path | None = None) -> Path:
+    """Find the repository root from the current execution directory."""
+    start = (start or Path.cwd()).resolve()
+
+    for candidate in [start, *start.parents]:
+        if (
+            (candidate / "config" / "data_sources.yml").exists()
+            and (candidate / "data" / "processed").exists()
+        ):
+            return candidate
+
+    raise FileNotFoundError(
+        "Could not locate the repository root. Render this report from within "
+        "the municipal-water-demand-forecasting repository."
+    )
+
+
+def load_json(path: Path) -> dict:
+    """Load a JSON object from disk."""
+    with path.open("r", encoding="utf-8") as file:
+        content = json.load(file)
+
+    if not isinstance(content, dict):
+        raise ValueError(f"Expected a JSON object in {path}.")
+
+    return content
+
+
+def load_yaml(path: Path) -> dict:
+    """Load a YAML mapping from disk."""
+    with path.open("r", encoding="utf-8") as file:
+        content = yaml.safe_load(file)
+
+    if not isinstance(content, dict):
+        raise ValueError(f"Expected a YAML mapping in {path}.")
+
+    return content
+
+
+def sha256_file(path: Path) -> str:
+    """Calculate a file's SHA-256 checksum."""
+    digest = hashlib.sha256()
+
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+
+    return digest.hexdigest()
+
+
+repository_root = find_repository_root()
+
+config_path = repository_root / "config" / "data_sources.yml"
+validation_path = repository_root / "reports" / "raw_data_validation.json"
+processed_path = (
+    repository_root
+    / "data"
+    / "processed"
+    / "fort_collins_daily_water_weather.csv"
+)
+processed_metadata_path = (
+    repository_root
+    / "data"
+    / "processed"
+    / "fort_collins_daily_water_weather_metadata.json"
+)
+
+config = load_yaml(config_path)
+validation = load_json(validation_path)
+processed_metadata = load_json(processed_metadata_path)
+
+daily = pd.read_csv(processed_path, parse_dates=["date"])
+daily = daily.sort_values("date").reset_index(drop=True)
+
+water_metadata_path = (
+    repository_root / processed_metadata["inputs"]["water_metadata"]
+)
+weather_metadata_path = (
+    repository_root / processed_metadata["inputs"]["weather_metadata"]
+)
+water_metadata = load_json(water_metadata_path)
+weather_metadata = load_json(weather_metadata_path)
+
+actual_processed_checksum = sha256_file(processed_path)
+expected_processed_checksum = processed_metadata["sha256"]
+
+if actual_processed_checksum != expected_processed_checksum:
+    raise ValueError(
+        "The processed CSV checksum does not match its metadata. Rebuild or "
+        "review the processed dataset before rendering the audit."
+    )
+
+if validation["summary"]["error_count"] != 0:
+    raise ValueError(
+        "The saved raw-data validation report contains errors. Resolve them "
+        "before rendering the audit."
+    )
+
+plt.rcParams["figure.figsize"] = (9, 4.8)
+plt.rcParams["axes.grid"] = True
+plt.rcParams["figure.autolayout"] = True
+```
+
+## Executive summary
+
+```{python}
+#| label: tbl-audit-summary
+#| tbl-cap: "Audit status and processed-dataset summary"
+#| echo: false
+
+audit_summary = pd.DataFrame(
+    [
+        ("Raw validation status", validation["status"]),
+        ("Validation checks", validation["summary"]["check_count"]),
+        ("Validation errors", validation["summary"]["error_count"]),
+        ("Validation warnings", validation["summary"]["warning_count"]),
+        ("Processed rows", processed_metadata["row_count"]),
+        ("Processed columns", processed_metadata["column_count"]),
+        ("Earliest date", processed_metadata["earliest_date"]),
+        ("Latest date", processed_metadata["latest_date"]),
+        ("Missing values", sum(processed_metadata["missing_values_by_column"].values())),
+        ("Duplicate dates", processed_metadata["duplicate_date_count"]),
+        ("Missing calendar dates", processed_metadata["missing_calendar_date_count"]),
+        ("Processed SHA-256", processed_metadata["sha256"]),
+    ],
+    columns=["Audit item", "Result"],
+)
+
+display(audit_summary)
+```
+
+::: {.callout-tip}
+## Readiness determination
+
+The validated and processed data are suitable for exploratory analysis and
+time-series model development. The only saved warning concerns the optional
+NOAA wind variable (`AWND`), which has incomplete raw coverage and is excluded
+from the initial processed dataset.
+:::
+
+```{python}
+#| label: tbl-validation-warnings
+#| tbl-cap: "Non-passing raw-data validation checks"
+#| echo: false
+
+nonpassing_checks = [
+    {
+        "Check": check["name"],
+        "Status": check["status"],
+        "Message": check["message"],
+    }
+    for check in validation["checks"]
+    if check["status"] != "pass"
+]
+
+display(pd.DataFrame(nonpassing_checks))
+```
+
+## Data provenance and lineage
+
+The processed table is built only after the raw snapshots pass the saved
+cross-source validation report. Each raw and processed file is accompanied by
+metadata containing its retrieval or generation time, row count, schema, and
+SHA-256 checksum.
+
+```{python}
+#| label: tbl-data-lineage
+#| tbl-cap: "Data lineage recorded by acquisition and processing metadata"
+#| echo: false
+
+lineage = pd.DataFrame(
+    [
+        {
+            "Stage": "Raw water demand",
+            "Provider": water_metadata["provider"],
+            "Dataset": water_metadata["dataset_name"],
+            "File": water_metadata["output_file"],
+            "Rows": water_metadata["row_count"],
+            "Retrieved/generated": water_metadata["retrieved_at_utc"],
+            "SHA-256": water_metadata["sha256"],
+        },
+        {
+            "Stage": "Raw NOAA weather",
+            "Provider": weather_metadata["provider"],
+            "Dataset": weather_metadata["dataset_name"],
+            "File": weather_metadata["output_file"],
+            "Rows": weather_metadata["row_count"],
+            "Retrieved/generated": weather_metadata["retrieved_at_utc"],
+            "SHA-256": weather_metadata["sha256"],
+        },
+        {
+            "Stage": "Processed daily table",
+            "Provider": "Derived from validated raw snapshots",
+            "Dataset": "Fort Collins daily water demand and weather",
+            "File": processed_metadata["output_file"],
+            "Rows": processed_metadata["row_count"],
+            "Retrieved/generated": processed_metadata["generated_at_utc"],
+            "SHA-256": processed_metadata["sha256"],
+        },
+    ]
+)
+
+display(lineage)
+```
+
+### Join integrity
+
+```{python}
+#| label: tbl-join-integrity
+#| tbl-cap: "One-to-one daily join summary"
+#| echo: false
+
+join_summary = pd.DataFrame(
+    [
+        ("Join method", processed_metadata["join"]["method"]),
+        ("Validation rule", processed_metadata["join"]["validate"]),
+        ("Water input rows", processed_metadata["join"]["water_input_rows"]),
+        ("Weather input rows", processed_metadata["join"]["weather_input_rows"]),
+        ("Output rows", processed_metadata["join"]["output_rows"]),
+        ("Unmatched rows", processed_metadata["join"]["unmatched_rows"]),
+        (
+            "Exact raw-date match",
+            validation["datasets"]["cross_source"]["exact_date_match"],
+        ),
+    ],
+    columns=["Join item", "Result"],
+)
+
+display(join_summary)
+```
+
+## Schema and modeling roles
+
+The primary modeling target is `water_demand_mgd`. The City's projected demand,
+the actual-to-projected ratio, and plant demand are retained for auditing and
+context but are not default predictors. Their availability at a genuine
+forecast origin would need to be established before they could be used as
+features.
+
+```{python}
+#| label: tbl-data-dictionary
+#| tbl-cap: "Processed data dictionary"
+#| echo: false
+
+descriptions = {
+    "date": "Local calendar date.",
+    "water_demand_mgd": "Observed City water demand; initial forecasting target.",
+    "projected_water_demand_mgd": "City-provided projected demand; retained as a reference field.",
+    "actual_projected_demand_ratio": "Observed demand divided by projected demand.",
+    "plant_demand_mgd": "Reported treatment-plant demand; retained as a reference field.",
+    "tmax_f": "Daily maximum air temperature.",
+    "tmin_f": "Daily minimum air temperature.",
+    "tavg_f": "Arithmetic mean of daily maximum and minimum temperature.",
+    "temperature_range_f": "Daily maximum minus daily minimum temperature.",
+    "precipitation_in": "Daily precipitation.",
+    "snowfall_in": "Daily snowfall.",
+    "snow_depth_in": "Snow depth.",
+    "year": "Calendar year.",
+    "month": "Calendar month, 1 through 12.",
+    "day_of_year": "Calendar day of year, 1 through 366.",
+    "day_of_week": "Monday=0 through Sunday=6.",
+    "is_weekend": "One for Saturday or Sunday; zero otherwise.",
+}
+
+roles = {
+    "date": "Index",
+    "water_demand_mgd": "Target",
+    "projected_water_demand_mgd": "Reference",
+    "actual_projected_demand_ratio": "Reference",
+    "plant_demand_mgd": "Reference",
+    "tmax_f": "Weather feature",
+    "tmin_f": "Weather feature",
+    "tavg_f": "Derived weather feature",
+    "temperature_range_f": "Derived weather feature",
+    "precipitation_in": "Weather feature",
+    "snowfall_in": "Weather feature",
+    "snow_depth_in": "Weather feature",
+    "year": "Calendar feature",
+    "month": "Calendar feature",
+    "day_of_year": "Calendar feature",
+    "day_of_week": "Calendar feature",
+    "is_weekend": "Calendar feature",
+}
+
+units = processed_metadata.get("units", {})
+
+data_dictionary = pd.DataFrame(
+    [
+        {
+            "Column": column,
+            "Role": roles[column],
+            "Description": descriptions[column],
+            "Units": units.get(column, "—"),
+            "Pandas dtype": str(daily[column].dtype),
+            "Missing values": int(daily[column].isna().sum()),
+        }
+        for column in daily.columns
+    ]
+)
+
+display(data_dictionary)
+```
+
+## Coverage and completeness
+
+### Daily calendar coverage
+
+```{python}
+#| label: tbl-annual-coverage
+#| tbl-cap: "Number of observations by calendar year"
+#| echo: false
+
+annual_coverage = (
+    daily.groupby("year", as_index=False)
+    .agg(
+        first_date=("date", "min"),
+        last_date=("date", "max"),
+        observations=("date", "size"),
+    )
+)
+
+annual_coverage["first_date"] = annual_coverage["first_date"].dt.date
+annual_coverage["last_date"] = annual_coverage["last_date"].dt.date
+
+display(annual_coverage)
+```
+
+The final year is a partial year ending March 31, 2026. Annual comparisons must
+therefore avoid treating 2026 as a complete calendar year.
+
+### Raw NOAA variable coverage
+
+```{python}
+#| label: tbl-weather-coverage
+#| tbl-cap: "Coverage of requested NOAA variables in the raw station file"
+#| echo: false
+
+weather_coverage = (
+    pd.DataFrame.from_dict(
+        validation["datasets"]["noaa_weather"]["coverage_by_variable"],
+        orient="index",
+    )
+    .reset_index(names="Variable")
+    .sort_values(["coverage_percent", "Variable"], ascending=[False, True])
+)
+
+display(
+    weather_coverage[
+        [
+            "Variable",
+            "present",
+            "nonmissing_count",
+            "missing_count",
+            "coverage_percent",
+        ]
+    ]
+)
+```
+
+`AWND` is preserved in the raw NOAA snapshot but excluded from the processed
+table because its 83.26% coverage would introduce missingness into the first
+analysis-ready dataset. No wind imputation is performed at this stage.
+
+## Water-demand characteristics
+
+### Daily series
+
+```{python}
+#| label: fig-demand-time-series
+#| fig-cap: "Daily observed Fort Collins water demand over the available period."
+#| echo: false
+
+fig, ax = plt.subplots()
+ax.plot(daily["date"], daily["water_demand_mgd"], linewidth=0.8)
+ax.set_xlabel("Date")
+ax.set_ylabel("Water demand (MGD)")
+ax.set_title("Daily observed water demand")
+plt.show()
+```
+
+### Distribution
+
+```{python}
+#| label: fig-demand-histogram
+#| fig-cap: "Distribution of daily observed water demand."
+#| echo: false
+
+fig, ax = plt.subplots()
+ax.hist(daily["water_demand_mgd"], bins=35)
+ax.set_xlabel("Water demand (MGD)")
+ax.set_ylabel("Number of days")
+ax.set_title("Distribution of daily water demand")
+plt.show()
+```
+
+### Annual descriptive statistics
+
+```{python}
+#| label: tbl-annual-demand
+#| tbl-cap: "Annual descriptive statistics for observed water demand"
+#| echo: false
+
+annual_demand = (
+    daily.groupby("year")["water_demand_mgd"]
+    .agg(["count", "mean", "std", "min", "median", "max"])
+    .reset_index()
+    .round(3)
+)
+
+display(annual_demand)
+```
+
+### Monthly seasonal profile
+
+```{python}
+#| label: fig-monthly-demand
+#| fig-cap: "Mean observed water demand by calendar month across the available years."
+#| echo: false
+
+monthly_demand = (
+    daily.groupby("month")["water_demand_mgd"]
+    .agg(["mean", "median", "std", "count"])
+    .reset_index()
+)
+
+fig, ax = plt.subplots()
+ax.plot(
+    monthly_demand["month"],
+    monthly_demand["mean"],
+    marker="o",
+)
+ax.set_xticks(range(1, 13))
+ax.set_xlabel("Calendar month")
+ax.set_ylabel("Mean water demand (MGD)")
+ax.set_title("Average monthly demand profile")
+plt.show()
+```
+
+```{python}
+#| label: tbl-monthly-demand
+#| tbl-cap: "Monthly water-demand summary"
+#| echo: false
+
+monthly_table = monthly_demand.rename(
+    columns={
+        "mean": "Mean MGD",
+        "median": "Median MGD",
+        "std": "Standard deviation",
+        "count": "Days",
+    }
+).round(3)
+
+display(monthly_table)
+```
+
+### Weekday and weekend summary
+
+```{python}
+#| label: tbl-weekend-demand
+#| tbl-cap: "Observed demand on weekdays and weekends"
+#| echo: false
+
+weekend_summary = (
+    daily.assign(
+        day_type=daily["is_weekend"].map({0: "Weekday", 1: "Weekend"})
+    )
+    .groupby("day_type")["water_demand_mgd"]
+    .agg(["count", "mean", "median", "std"])
+    .reset_index()
+    .round(3)
+)
+
+display(weekend_summary)
+```
+
+These comparisons are descriptive. They do not isolate causal calendar effects
+from weather, seasonality, long-term changes, or serial dependence.
+
+## Weather characteristics
+
+```{python}
+#| label: tbl-weather-summary
+#| tbl-cap: "Descriptive statistics for processed weather variables"
+#| echo: false
+
+weather_columns = [
+    "tmax_f",
+    "tmin_f",
+    "tavg_f",
+    "temperature_range_f",
+    "precipitation_in",
+    "snowfall_in",
+    "snow_depth_in",
+]
+
+weather_summary = (
+    daily[weather_columns]
+    .describe()
+    .transpose()
+    .rename_axis("Variable")
+    .reset_index()
+    .round(3)
+)
+
+display(weather_summary)
+```
+
+### Temperature and demand
+
+```{python}
+#| label: fig-temperature-demand
+#| fig-cap: "Observed water demand versus average daily temperature. The relationship is descriptive and retains seasonal and temporal confounding."
+#| echo: false
+
+fig, ax = plt.subplots()
+ax.scatter(
+    daily["tavg_f"],
+    daily["water_demand_mgd"],
+    alpha=0.35,
+    s=14,
+)
+ax.set_xlabel("Average daily temperature (°F)")
+ax.set_ylabel("Water demand (MGD)")
+ax.set_title("Water demand and average temperature")
+plt.show()
+```
+
+```{python}
+#| label: tbl-weather-correlations
+#| tbl-cap: "Descriptive Pearson correlations with observed water demand"
+#| echo: false
+
+correlation_variables = [
+    "water_demand_mgd",
+    "tmax_f",
+    "tmin_f",
+    "tavg_f",
+    "temperature_range_f",
+    "precipitation_in",
+    "snowfall_in",
+    "snow_depth_in",
+]
+
+demand_correlations = (
+    daily[correlation_variables]
+    .corr(numeric_only=True)["water_demand_mgd"]
+    .drop("water_demand_mgd")
+    .rename("Correlation with water demand")
+    .sort_values(ascending=False)
+    .reset_index(names="Variable")
+    .round(3)
+)
+
+display(demand_correlations)
+```
+
+The correlations above are exploratory associations, not estimates of causal
+weather effects. Seasonality, trends, repeated observations, and delayed
+responses can influence the values.
+
+## City projection reference fields
+
+The source contains both observed and City-projected demand. The project keeps
+the projected series as a reference for understanding the source data, but it
+is not included among the default forecasting predictors.
+
+```{python}
+#| label: tbl-projection-comparison
+#| tbl-cap: "Descriptive comparison of observed and City-projected demand"
+#| echo: false
+
+projection_error = (
+    daily["water_demand_mgd"] - daily["projected_water_demand_mgd"]
+)
+
+projection_summary = pd.DataFrame(
+    [
+        ("Mean observed demand (MGD)", daily["water_demand_mgd"].mean()),
+        (
+            "Mean projected demand (MGD)",
+            daily["projected_water_demand_mgd"].mean(),
+        ),
+        ("Mean observed-minus-projected error (MGD)", projection_error.mean()),
+        ("Mean absolute error (MGD)", projection_error.abs().mean()),
+        ("Root mean squared error (MGD)", (projection_error.pow(2).mean()) ** 0.5),
+        (
+            "Observed/projected correlation",
+            daily[
+                ["water_demand_mgd", "projected_water_demand_mgd"]
+            ].corr().iloc[0, 1],
+        ),
+    ],
+    columns=["Metric", "Value"],
+)
+
+projection_summary["Value"] = projection_summary["Value"].round(4)
+display(projection_summary)
+```
+
+```{python}
+#| label: fig-actual-projected
+#| fig-cap: "Observed versus City-projected daily demand. The diagonal represents equality."
+#| echo: false
+
+lower = min(
+    daily["water_demand_mgd"].min(),
+    daily["projected_water_demand_mgd"].min(),
+)
+upper = max(
+    daily["water_demand_mgd"].max(),
+    daily["projected_water_demand_mgd"].max(),
+)
+
+fig, ax = plt.subplots()
+ax.scatter(
+    daily["projected_water_demand_mgd"],
+    daily["water_demand_mgd"],
+    alpha=0.35,
+    s=14,
+)
+ax.plot([lower, upper], [lower, upper], linestyle="--")
+ax.set_xlabel("Projected demand (MGD)")
+ax.set_ylabel("Observed demand (MGD)")
+ax.set_title("Observed and projected demand")
+plt.show()
+```
+
+## Deterministic transformation checks
+
+The processed builder creates several deterministic fields. This report
+rechecks their identities rather than assuming they were generated correctly.
+
+```{python}
+#| label: tbl-derived-checks
+#| tbl-cap: "Independent checks of derived columns"
+#| echo: false
+
+derived_checks = pd.DataFrame(
+    [
+        {
+            "Check": "tavg_f = (tmax_f + tmin_f) / 2",
+            "Mismatches": int(
+                (
+                    daily["tavg_f"]
+                    != (daily["tmax_f"] + daily["tmin_f"]) / 2
+                ).sum()
+            ),
+        },
+        {
+            "Check": "temperature_range_f = tmax_f - tmin_f",
+            "Mismatches": int(
+                (
+                    daily["temperature_range_f"]
+                    != daily["tmax_f"] - daily["tmin_f"]
+                ).sum()
+            ),
+        },
+        {
+            "Check": "year matches date",
+            "Mismatches": int(
+                (daily["year"] != daily["date"].dt.year).sum()
+            ),
+        },
+        {
+            "Check": "month matches date",
+            "Mismatches": int(
+                (daily["month"] != daily["date"].dt.month).sum()
+            ),
+        },
+        {
+            "Check": "day_of_year matches date",
+            "Mismatches": int(
+                (
+                    daily["day_of_year"]
+                    != daily["date"].dt.dayofyear
+                ).sum()
+            ),
+        },
+        {
+            "Check": "day_of_week uses Monday=0",
+            "Mismatches": int(
+                (
+                    daily["day_of_week"]
+                    != daily["date"].dt.dayofweek
+                ).sum()
+            ),
+        },
+        {
+            "Check": "is_weekend matches Saturday/Sunday",
+            "Mismatches": int(
+                (
+                    daily["is_weekend"]
+                    != (daily["date"].dt.dayofweek >= 5).astype(int)
+                ).sum()
+            ),
+        },
+    ]
+)
+
+display(derived_checks)
+```
+
+## Modeling-readiness considerations
+
+::: {.callout-warning}
+## Time-series leakage
+
+Random train/test splits are not appropriate for the primary evaluation.
+Validation should preserve chronological order through a fixed holdout,
+rolling-origin evaluation, or another explicitly time-aware design.
+:::
+
+The following decisions should carry into model development:
+
+1. **Target.** Use `water_demand_mgd` as the initial outcome. Continue treating
+   the City projection, observed/projected ratio, and plant demand as reference
+   columns unless their real-time availability and intended interpretation are
+   established.
+
+2. **Weather variables.** The first processed table uses complete temperature,
+   precipitation, snowfall, and snow-depth fields. `AWND` remains available in
+   raw data but is excluded rather than silently imputed.
+
+3. **Calendar variables.** Integer month and weekday encodings are convenient
+   audit fields, but some models may need categorical or cyclical
+   representations instead of assuming a linear numeric effect.
+
+4. **Lagged demand features.** Lags and rolling summaries can be useful, but
+   every feature must be computed using only information available before the
+   prediction date. Rolling calculations should be shifted before model
+   fitting.
+
+5. **Partial final year.** The series ends March 31, 2026. Full-year summaries
+   and year-over-year comparisons must account for the incomplete 2026 period.
+
+6. **Single weather station.** The primary station provides complete core
+   coverage, but one station cannot represent every microclimate within the
+   utility service area. This is an explicit scope limitation of the minimum
+   viable analysis.
+
+7. **Source status.** The water-demand data are preserved as a dated raw
+   snapshot because the City's open-data platform was undergoing migration.
+   Future refreshes should be compared against the current snapshot and
+   accompanied by updated acquisition metadata.
+
+## Audit conclusion
+
+The data pipeline produces a complete one-to-one daily table with verified
+provenance, matching checksums, no duplicate dates, no missing calendar dates,
+and no missing processed values. The dataset is approved for the next stage:
+time-aware exploratory forecasting baselines and feature engineering.
+
+The audit should be re-rendered whenever raw snapshots, source endpoints,
+station choices, processing rules, or processed outputs change.
