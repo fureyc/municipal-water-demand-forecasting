@@ -171,3 +171,22 @@ sources:
         noaa_daily_{station_id}_{download_date}.csv
       metadata_filename_template: >-
         noaa_daily_{station_id}_{download_date}_metadata.json
+
+processing:
+  daily_dataset:
+    validation_report: "reports/raw_data_validation.json"
+    join_method: "inner"
+    target_column: "water_demand_mgd"
+
+    weather_variables:
+      TMAX: "tmax_f"
+      TMIN: "tmin_f"
+      PRCP: "precipitation_in"
+      SNOW: "snowfall_in"
+      SNWD: "snow_depth_in"
+
+    output:
+      directory: "data/processed"
+      filename: "fort_collins_daily_water_weather.csv"
+      metadata_filename: >-
+        fort_collins_daily_water_weather_metadata.json
