@@ -23,46 +23,43 @@ project:
     create_timestamped_snapshots: true
 
 
-# ============================================================
-# External data sources
-# ============================================================
-
 sources:
 
-  # ----------------------------------------------------------
-  # City of Fort Collins treated-water demand
-  # ----------------------------------------------------------
   water_demand:
     provider: "City of Fort Collins Utilities"
     dataset_name: "City of Fort Collins Water Demand"
 
-    description: >-
-      Daily City of Fort Collins treated-water demand,
-      reported in millions of gallons per day. Values are
-      provisional unless otherwise specified.
-
-    frequency: "daily"
-    provisional: true
-
     source_migration:
       legacy_platform: "Socrata"
       legacy_dataset_id: "ia5t-gxxe"
-      legacy_portal_discontinued: true
-      legacy_portal_discontinued_date: "2026-06-30"
+      legacy_portal_retirement_date: "2026-06-30"
 
       replacement_platform: "ArcGIS Hub"
-      replacement_endpoint_status: "pending_verification"
+      replacement_endpoint_status: "not_found_in_public_catalog"
       replacement_endpoint: null
+
+      verification_date: "2026-08-03"
+      verification_notes: >-
+        The dataset was not located in the publicly visible ArcGIS
+        catalog. The City's new Open Data portal indicated that
+        Environmental Health datasets were coming soon at the time
+        of verification.
 
     access:
       selected_method: "socrata_legacy"
-      format: "csv"
 
       socrata_legacy:
-        base_url: "https://opendata.fcgov.com"
-        resource_id: "ia5t-gxxe"
-        endpoint: >-
+        status: "operational_pending_full_validation"
+        dataset_id: "ia5t-gxxe"
+
+        primary_endpoint: >-
+          https://fortcollins.data.socrata.com/resource/ia5t-gxxe.csv
+
+        alternate_endpoint: >-
           https://opendata.fcgov.com/resource/ia5t-gxxe.csv
+
+        metadata_endpoint: >-
+          https://fortcollins.data.socrata.com/api/views/ia5t-gxxe
 
     fields:
       date:
@@ -95,14 +92,16 @@ sources:
         units: "million_gallons_per_day"
 
     request:
+      row_limit: 50000
       order_by: "date"
       timeout_seconds: 60
 
     output:
       directory: "data/raw/water_demand"
-      filename: "fort_collins_water_demand.csv"
-      metadata_filename: "fort_collins_water_demand_metadata.json"
-
+      filename_template: >-
+        fort_collins_water_demand_{download_date}.csv
+      metadata_filename_template: >-
+        fort_collins_water_demand_{download_date}_metadata.json
 
   # ----------------------------------------------------------
   # NOAA/NCEI daily weather observations
