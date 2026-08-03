@@ -1,0 +1,129 @@
+config_version: 1
+
+forecast:
+  task: "one_day_ahead"
+  frequency: "daily"
+  date_column: "date"
+  target_column: "water_demand_mgd"
+  horizon_days: 1
+
+evaluation:
+  strategy: "expanding_window"
+
+  initial_training:
+    start_date: "2020-01-01"
+    end_date: "2022-12-31"
+
+  rolling_validation:
+    start_date: "2023-01-01"
+    end_date: "2025-03-31"
+    window_months: 3
+    step_months: 3
+    gap_days: 0
+
+  final_holdout:
+    start_date: "2025-04-01"
+    end_date: "2026-03-31"
+    locked_for_final_reporting: true
+
+  refit_before_each_validation_window: true
+  random_splits_allowed: false
+
+metrics:
+  primary: "mae"
+  secondary:
+    - "rmse"
+    - "mape"
+
+features:
+  candidate_demand_lags_days:
+    - 1
+    - 2
+    - 3
+    - 7
+    - 14
+    - 28
+
+  candidate_weather_lags_days:
+    - 1
+    - 2
+    - 7
+
+  candidate_demand_rolling_features:
+    windows_days:
+      - 7
+      - 14
+      - 28
+    statistics:
+      - "mean"
+      - "std"
+    shift_days: 1
+
+  calendar_columns:
+    - "month"
+    - "day_of_year"
+    - "day_of_week"
+    - "is_weekend"
+
+  candidate_cyclical_encodings:
+    - "day_of_year"
+    - "day_of_week"
+
+  weather_columns:
+    - "tmax_f"
+    - "tmin_f"
+    - "tavg_f"
+    - "temperature_range_f"
+    - "precipitation_in"
+    - "snowfall_in"
+    - "snow_depth_in"
+
+  reference_columns:
+    - "projected_water_demand_mgd"
+    - "actual_projected_demand_ratio"
+    - "plant_demand_mgd"
+
+feature_scenarios:
+  operational:
+    description: >-
+      Uses only information that could be available before the forecast date,
+      including calendar variables, lagged demand and lagged observed weather.
+    include_same_day_observed_weather: false
+    include_lagged_weather: true
+
+  weather_informed_benchmark:
+    description: >-
+      Retrospective benchmark that adds same-day observed weather. This is not
+      treated as a deployable operational forecast.
+    include_same_day_observed_weather: true
+    include_lagged_weather: true
+
+leakage_controls:
+  construct_lags_using_prior_dates_only: true
+  shift_rolling_features_before_modeling: true
+  fit_preprocessing_within_each_training_window: true
+  select_features_using_rolling_validation_only: true
+  use_final_holdout_for_model_selection: false
+
+baselines:
+  naive:
+    - "previous_day"
+    - "same_day_previous_week"
+
+  regression:
+    - "calendar_only"
+    - "weather_and_calendar"
+    - "lagged_demand"
+
+  reference:
+    - "city_projected_demand"
+
+diagnostics:
+  design_matrix:
+    compute_condition_number: true
+    inspect_singular_values: true
+    inspect_feature_correlations: true
+    repeat_within_training_windows: true
+
+reproducibility:
+  random_seed: 42
