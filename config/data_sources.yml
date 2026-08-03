@@ -113,7 +113,7 @@ sources:
 
     description: >-
       Daily station-level weather observations used to construct
-      weather covariates for water-demand modeling.
+      weather covariates for Fort Collins water-demand modeling.
 
     frequency: "daily"
 
@@ -143,6 +143,13 @@ sources:
         - "SNWD"
         - "AWND"
 
+      default_modeling_variables:
+        - "TMAX"
+        - "TMIN"
+        - "PRCP"
+        - "SNOW"
+        - "SNWD"
+
     date_range:
       start_date: "2020-01-01"
       end_date: "2026-03-31"
@@ -153,7 +160,14 @@ sources:
       include_station_location: true
       timeout_seconds: 120
 
+    validation:
+      minimum_required_coverage: 0.99
+      require_complete_calendar: true
+      allow_duplicate_dates: false
+
     output:
       directory: "data/raw/noaa"
-      filename_template: "noaa_daily_{station_id}.csv"
-      metadata_filename_template: "noaa_daily_{station_id}_metadata.json"
+      filename_template: >-
+        noaa_daily_{station_id}_{download_date}.csv
+      metadata_filename_template: >-
+        noaa_daily_{station_id}_{download_date}_metadata.json
