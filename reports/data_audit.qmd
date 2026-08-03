@@ -597,7 +597,8 @@ demand_correlations = (
     .drop("water_demand_mgd")
     .rename("Correlation with water demand")
     .sort_values(ascending=False)
-    .reset_index(names="Variable")
+    .rename_axis("Variable")
+    .reset_index()
     .round(3)
 )
 
