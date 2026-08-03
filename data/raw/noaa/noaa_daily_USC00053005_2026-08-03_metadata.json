@@ -1,0 +1,157 @@
+{
+  "column_count": 18,
+  "columns": [
+    "STATION",
+    "NAME",
+    "LATITUDE",
+    "LONGITUDE",
+    "ELEVATION",
+    "DATE",
+    "AWND",
+    "AWND_ATTRIBUTES",
+    "PRCP",
+    "PRCP_ATTRIBUTES",
+    "SNOW",
+    "SNOW_ATTRIBUTES",
+    "SNWD",
+    "SNWD_ATTRIBUTES",
+    "TMAX",
+    "TMAX_ATTRIBUTES",
+    "TMIN",
+    "TMIN_ATTRIBUTES"
+  ],
+  "config_version": 1,
+  "configured_end_date": "2026-03-31",
+  "configured_start_date": "2020-01-01",
+  "content_type": "text/csv;charset=utf-8",
+  "coverage_by_variable": {
+    "AWND": {
+      "coverage_fraction": 0.832603,
+      "coverage_percent": 83.26,
+      "missing_count": 382,
+      "nonmissing_count": 1900,
+      "present": true
+    },
+    "PRCP": {
+      "coverage_fraction": 1.0,
+      "coverage_percent": 100.0,
+      "missing_count": 0,
+      "nonmissing_count": 2282,
+      "present": true
+    },
+    "SNOW": {
+      "coverage_fraction": 1.0,
+      "coverage_percent": 100.0,
+      "missing_count": 0,
+      "nonmissing_count": 2282,
+      "present": true
+    },
+    "SNWD": {
+      "coverage_fraction": 1.0,
+      "coverage_percent": 100.0,
+      "missing_count": 0,
+      "nonmissing_count": 2282,
+      "present": true
+    },
+    "TMAX": {
+      "coverage_fraction": 1.0,
+      "coverage_percent": 100.0,
+      "missing_count": 0,
+      "nonmissing_count": 2282,
+      "present": true
+    },
+    "TMIN": {
+      "coverage_fraction": 1.0,
+      "coverage_percent": 100.0,
+      "missing_count": 0,
+      "nonmissing_count": 2282,
+      "present": true
+    }
+  },
+  "dataset_id": "daily-summaries",
+  "dataset_name": "Daily Summaries",
+  "download_date": "2026-08-03",
+  "duplicate_date_count": 0,
+  "earliest_date": "2020-01-01",
+  "expected_date_count": 2282,
+  "file_action": "created",
+  "file_size_bytes": 370067,
+  "http_status": 200,
+  "invalid_date_count": 0,
+  "latest_date": "2026-03-31",
+  "missing_calendar_date_count": 0,
+  "missing_calendar_dates": [],
+  "missing_values_by_column": {
+    "AWND": 382,
+    "AWND_ATTRIBUTES": 382,
+    "DATE": 0,
+    "ELEVATION": 0,
+    "LATITUDE": 0,
+    "LONGITUDE": 0,
+    "NAME": 0,
+    "PRCP": 0,
+    "PRCP_ATTRIBUTES": 0,
+    "SNOW": 0,
+    "SNOW_ATTRIBUTES": 0,
+    "SNWD": 0,
+    "SNWD_ATTRIBUTES": 0,
+    "STATION": 0,
+    "TMAX": 0,
+    "TMAX_ATTRIBUTES": 0,
+    "TMIN": 0,
+    "TMIN_ATTRIBUTES": 0
+  },
+  "optional_variables": [
+    "SNOW",
+    "SNWD",
+    "AWND"
+  ],
+  "output_file": "data/raw/noaa/noaa_daily_USC00053005_2026-08-03.csv",
+  "provider": "NOAA National Centers for Environmental Information",
+  "query_parameters": {
+    "dataTypes": "TMAX,TMIN,PRCP,SNOW,SNWD,AWND",
+    "dataset": "daily-summaries",
+    "endDate": "2026-03-31",
+    "format": "csv",
+    "includeAttributes": "true",
+    "includeStationLocation": "true",
+    "includeStationName": "true",
+    "startDate": "2020-01-01",
+    "stations": "USC00053005",
+    "units": "standard"
+  },
+  "request_url": "https://www.ncei.noaa.gov/access/services/data/v1?dataset=daily-summaries&stations=USC00053005&startDate=2020-01-01&endDate=2026-03-31&dataTypes=TMAX%2CTMIN%2CPRCP%2CSNOW%2CSNWD%2CAWND&format=csv&units=standard&includeAttributes=true&includeStationName=true&includeStationLocation=true",
+  "requested_endpoint": "https://www.ncei.noaa.gov/access/services/data/v1",
+  "requested_variables": [
+    "TMAX",
+    "TMIN",
+    "PRCP",
+    "SNOW",
+    "SNWD",
+    "AWND"
+  ],
+  "required_variables": [
+    "TMAX",
+    "TMIN",
+    "PRCP"
+  ],
+  "retrieved_at_local": "2026-08-03T11:00:17.165042-06:00",
+  "retrieved_at_utc": "2026-08-03T17:00:17.165042+00:00",
+  "returned_stations": [
+    "USC00053005"
+  ],
+  "row_count": 2282,
+  "selected_method": "ncei_access_data_service",
+  "sha256": "91d8029f3c81c8517b3e553222a921b047eb5b1d5c0402b554a8a23a5431efa4",
+  "station": {
+    "elevation_m": 1525.2,
+    "id": "USC00053005",
+    "latitude": 40.57629,
+    "longitude": -105.08575,
+    "name": "FORT COLLINS, CO US",
+    "role": "primary"
+  },
+  "unexpected_date_count": 0,
+  "unexpected_dates": [],
+  "unique_date_count": 2282
+}
