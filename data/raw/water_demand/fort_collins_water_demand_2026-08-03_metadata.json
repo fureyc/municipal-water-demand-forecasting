@@ -1,0 +1,41 @@
+{
+  "column_count": 5,
+  "columns": [
+    "date",
+    "total_actual_demand_mgd",
+    "total_projected_demand_mgd",
+    "actual_projected_demand",
+    "total_plant_demand_mgd"
+  ],
+  "config_version": 1,
+  "content_type": "text/csv; charset=UTF-8",
+  "dataset_name": "City of Fort Collins Water Demand",
+  "download_date": "2026-08-03",
+  "duplicate_date_count": 0,
+  "earliest_date": "2020-01-01",
+  "file_action": "confirmed_existing_file",
+  "file_size_bytes": 187533,
+  "http_status": 200,
+  "latest_date": "2026-03-31",
+  "missing_values_by_column": {
+    "actual_projected_demand": 0,
+    "date": 0,
+    "total_actual_demand_mgd": 0,
+    "total_plant_demand_mgd": 0,
+    "total_projected_demand_mgd": 0
+  },
+  "output_file": "data/raw/water_demand/fort_collins_water_demand_2026-08-03.csv",
+  "provider": "City of Fort Collins Utilities",
+  "query_parameters": {
+    "$limit": 50000,
+    "$order": "date"
+  },
+  "request_url": "https://fortcollins.data.socrata.com/resource/ia5t-gxxe.csv?%24limit=50000&%24order=date",
+  "requested_endpoint": "https://fortcollins.data.socrata.com/resource/ia5t-gxxe.csv",
+  "retrieved_at_local": "2026-08-03T10:38:21.967762-06:00",
+  "retrieved_at_utc": "2026-08-03T16:38:21.967762+00:00",
+  "row_count": 2282,
+  "selected_method": "socrata_legacy",
+  "sha256": "63f37f599adaf6f929111a5b0721122eadd5e06357e84ca7934ca805e3f55a7f",
+  "successful_endpoint": "https://fortcollins.data.socrata.com/resource/ia5t-gxxe.csv"
+}
