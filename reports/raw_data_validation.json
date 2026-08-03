@@ -1,0 +1,572 @@
+{
+  "checks": [
+    {
+      "message": "The CSV checksum matches its acquisition metadata.",
+      "name": "water_demand.checksum",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "actual_row_count": 2282,
+        "expected_row_count": 2282
+      },
+      "message": "The CSV row count matches its metadata.",
+      "name": "water_demand.row_count",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "actual_columns": [
+          "date",
+          "total_actual_demand_mgd",
+          "total_projected_demand_mgd",
+          "actual_projected_demand",
+          "total_plant_demand_mgd"
+        ],
+        "expected_columns": [
+          "date",
+          "total_actual_demand_mgd",
+          "total_projected_demand_mgd",
+          "actual_projected_demand",
+          "total_plant_demand_mgd"
+        ]
+      },
+      "message": "The CSV columns match their recorded order in metadata.",
+      "name": "water_demand.columns",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "missing_columns": []
+      },
+      "message": "All configured water-demand columns are present.",
+      "name": "water_demand.schema",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_date_count": 0
+      },
+      "message": "All date values parsed successfully.",
+      "name": "water_demand.valid_dates",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "duplicate_date_count": 0
+      },
+      "message": "The daily date index contains no duplicates.",
+      "name": "water_demand.duplicate_dates",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "earliest_date": "2020-01-01",
+        "first_missing_dates": [],
+        "latest_date": "2026-03-31",
+        "missing_calendar_date_count": 0,
+        "unique_date_count": 2282
+      },
+      "message": "The dataset contains a complete daily calendar.",
+      "name": "water_demand.complete_calendar",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'total_actual_demand_mgd' contains only numeric or missing values.",
+      "name": "water_demand.total_actual_demand_mgd.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'total_projected_demand_mgd' contains only numeric or missing values.",
+      "name": "water_demand.total_projected_demand_mgd.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'actual_projected_demand' contains only numeric or missing values.",
+      "name": "water_demand.actual_projected_demand.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'total_plant_demand_mgd' contains only numeric or missing values.",
+      "name": "water_demand.total_plant_demand_mgd.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "nonpositive_count": 0
+      },
+      "message": "actual_demand contains only positive observed values.",
+      "name": "water_demand.actual_demand.positive",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "nonpositive_count": 0
+      },
+      "message": "projected_demand contains only positive observed values.",
+      "name": "water_demand.projected_demand.positive",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "nonpositive_count": 0
+      },
+      "message": "plant_demand contains only positive observed values.",
+      "name": "water_demand.plant_demand.positive",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "maximum_absolute_error": 4.440892098500626e-16,
+        "ratio_mismatch_count": 0,
+        "tolerance": 1e-06
+      },
+      "message": "The recorded actual/projected ratio is internally consistent.",
+      "name": "water_demand.actual_projected_ratio",
+      "status": "pass"
+    },
+    {
+      "message": "The CSV checksum matches its acquisition metadata.",
+      "name": "noaa_weather.checksum",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "actual_row_count": 2282,
+        "expected_row_count": 2282
+      },
+      "message": "The CSV row count matches its metadata.",
+      "name": "noaa_weather.row_count",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "actual_columns": [
+          "STATION",
+          "NAME",
+          "LATITUDE",
+          "LONGITUDE",
+          "ELEVATION",
+          "DATE",
+          "AWND",
+          "AWND_ATTRIBUTES",
+          "PRCP",
+          "PRCP_ATTRIBUTES",
+          "SNOW",
+          "SNOW_ATTRIBUTES",
+          "SNWD",
+          "SNWD_ATTRIBUTES",
+          "TMAX",
+          "TMAX_ATTRIBUTES",
+          "TMIN",
+          "TMIN_ATTRIBUTES"
+        ],
+        "expected_columns": [
+          "STATION",
+          "NAME",
+          "LATITUDE",
+          "LONGITUDE",
+          "ELEVATION",
+          "DATE",
+          "AWND",
+          "AWND_ATTRIBUTES",
+          "PRCP",
+          "PRCP_ATTRIBUTES",
+          "SNOW",
+          "SNOW_ATTRIBUTES",
+          "SNWD",
+          "SNWD_ATTRIBUTES",
+          "TMAX",
+          "TMAX_ATTRIBUTES",
+          "TMIN",
+          "TMIN_ATTRIBUTES"
+        ]
+      },
+      "message": "The CSV columns match their recorded order in metadata.",
+      "name": "noaa_weather.columns",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "missing_columns": []
+      },
+      "message": "Required NOAA structural columns are present.",
+      "name": "noaa_weather.schema",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "configured_station": "USC00053005",
+        "returned_stations": [
+          "USC00053005"
+        ]
+      },
+      "message": "All rows belong to configured station USC00053005.",
+      "name": "noaa_weather.station_identity",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_date_count": 0
+      },
+      "message": "All date values parsed successfully.",
+      "name": "noaa_weather.valid_dates",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "duplicate_date_count": 0
+      },
+      "message": "The daily date index contains no duplicates.",
+      "name": "noaa_weather.duplicate_dates",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "earliest_date": "2020-01-01",
+        "first_missing_dates": [],
+        "latest_date": "2026-03-31",
+        "missing_calendar_date_count": 0,
+        "unique_date_count": 2282
+      },
+      "message": "The dataset contains a complete daily calendar.",
+      "name": "noaa_weather.complete_calendar",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "configured_end_date": "2026-03-31",
+        "configured_start_date": "2020-01-01",
+        "observed_end_date": "2026-03-31",
+        "observed_start_date": "2020-01-01"
+      },
+      "message": "The NOAA date range matches the configured acquisition period.",
+      "name": "noaa_weather.configured_date_range",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'TMAX' contains only numeric or missing values.",
+      "name": "noaa_weather.TMAX.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 1.0,
+        "coverage_percent": 100.0,
+        "missing_count": 0,
+        "nonmissing_count": 2282,
+        "present": true,
+        "required_minimum_coverage": 0.99
+      },
+      "message": "TMAX meets the required coverage threshold.",
+      "name": "noaa_weather.TMAX.coverage",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'TMIN' contains only numeric or missing values.",
+      "name": "noaa_weather.TMIN.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 1.0,
+        "coverage_percent": 100.0,
+        "missing_count": 0,
+        "nonmissing_count": 2282,
+        "present": true,
+        "required_minimum_coverage": 0.99
+      },
+      "message": "TMIN meets the required coverage threshold.",
+      "name": "noaa_weather.TMIN.coverage",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'PRCP' contains only numeric or missing values.",
+      "name": "noaa_weather.PRCP.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 1.0,
+        "coverage_percent": 100.0,
+        "missing_count": 0,
+        "nonmissing_count": 2282,
+        "present": true,
+        "required_minimum_coverage": 0.99
+      },
+      "message": "PRCP meets the required coverage threshold.",
+      "name": "noaa_weather.PRCP.coverage",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'SNOW' contains only numeric or missing values.",
+      "name": "noaa_weather.SNOW.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 1.0,
+        "coverage_percent": 100.0,
+        "missing_count": 0,
+        "nonmissing_count": 2282,
+        "present": true,
+        "required_minimum_coverage": null
+      },
+      "message": "Optional variable SNOW is complete.",
+      "name": "noaa_weather.SNOW.coverage",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 0
+      },
+      "message": "Column 'SNWD' contains only numeric or missing values.",
+      "name": "noaa_weather.SNWD.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 1.0,
+        "coverage_percent": 100.0,
+        "missing_count": 0,
+        "nonmissing_count": 2282,
+        "present": true,
+        "required_minimum_coverage": null
+      },
+      "message": "Optional variable SNWD is complete.",
+      "name": "noaa_weather.SNWD.coverage",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "invalid_numeric_count": 0,
+        "missing_count": 382
+      },
+      "message": "Column 'AWND' contains only numeric or missing values.",
+      "name": "noaa_weather.AWND.numeric",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "coverage_fraction": 0.832603,
+        "coverage_percent": 83.26,
+        "missing_count": 382,
+        "nonmissing_count": 1900,
+        "present": true,
+        "required_minimum_coverage": null
+      },
+      "message": "Optional variable AWND has 83.26% coverage.",
+      "name": "noaa_weather.AWND.coverage",
+      "status": "warning"
+    },
+    {
+      "details": {
+        "reversed_temperature_count": 0
+      },
+      "message": "TMAX is greater than or equal to TMIN on every comparable day.",
+      "name": "noaa_weather.temperature_order",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "flagged_day_count": 0,
+        "lower_bound_f": -80,
+        "upper_bound_f": 130
+      },
+      "message": "Temperature values fall within broad plausibility bounds.",
+      "name": "noaa_weather.temperature_plausibility",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "negative_count": 0
+      },
+      "message": "PRCP contains no negative observed values.",
+      "name": "noaa_weather.PRCP.nonnegative",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "negative_count": 0
+      },
+      "message": "SNOW contains no negative observed values.",
+      "name": "noaa_weather.SNOW.nonnegative",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "negative_count": 0
+      },
+      "message": "SNWD contains no negative observed values.",
+      "name": "noaa_weather.SNWD.nonnegative",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "negative_count": 0
+      },
+      "message": "AWND contains no negative observed values.",
+      "name": "noaa_weather.AWND.nonnegative",
+      "status": "pass"
+    },
+    {
+      "details": {
+        "first_water_only_dates": [],
+        "first_weather_only_dates": [],
+        "water_only_date_count": 0,
+        "water_unique_dates": 2282,
+        "weather_only_date_count": 0,
+        "weather_unique_dates": 2282
+      },
+      "message": "Water-demand and NOAA weather dates align exactly.",
+      "name": "cross_source.date_alignment",
+      "status": "pass"
+    }
+  ],
+  "config_path": "config/data_sources.yml",
+  "datasets": {
+    "cross_source": {
+      "exact_date_match": true,
+      "water_only_date_count": 0,
+      "water_unique_dates": 2282,
+      "weather_only_date_count": 0,
+      "weather_unique_dates": 2282
+    },
+    "noaa_weather": {
+      "column_count": 18,
+      "coverage_by_variable": {
+        "AWND": {
+          "coverage_fraction": 0.832603,
+          "coverage_percent": 83.26,
+          "missing_count": 382,
+          "nonmissing_count": 1900,
+          "present": true
+        },
+        "PRCP": {
+          "coverage_fraction": 1.0,
+          "coverage_percent": 100.0,
+          "missing_count": 0,
+          "nonmissing_count": 2282,
+          "present": true
+        },
+        "SNOW": {
+          "coverage_fraction": 1.0,
+          "coverage_percent": 100.0,
+          "missing_count": 0,
+          "nonmissing_count": 2282,
+          "present": true
+        },
+        "SNWD": {
+          "coverage_fraction": 1.0,
+          "coverage_percent": 100.0,
+          "missing_count": 0,
+          "nonmissing_count": 2282,
+          "present": true
+        },
+        "TMAX": {
+          "coverage_fraction": 1.0,
+          "coverage_percent": 100.0,
+          "missing_count": 0,
+          "nonmissing_count": 2282,
+          "present": true
+        },
+        "TMIN": {
+          "coverage_fraction": 1.0,
+          "coverage_percent": 100.0,
+          "missing_count": 0,
+          "nonmissing_count": 2282,
+          "present": true
+        }
+      },
+      "csv_path": "/content/municipal-water-demand-forecasting/data/raw/noaa/noaa_daily_USC00053005_2026-08-03.csv",
+      "earliest_date": "2020-01-01",
+      "latest_date": "2026-03-31",
+      "missing_values_by_column": {
+        "AWND": 382,
+        "AWND_ATTRIBUTES": 382,
+        "DATE": 0,
+        "ELEVATION": 0,
+        "LATITUDE": 0,
+        "LONGITUDE": 0,
+        "NAME": 0,
+        "PRCP": 0,
+        "PRCP_ATTRIBUTES": 0,
+        "SNOW": 0,
+        "SNOW_ATTRIBUTES": 0,
+        "SNWD": 0,
+        "SNWD_ATTRIBUTES": 0,
+        "STATION": 0,
+        "TMAX": 0,
+        "TMAX_ATTRIBUTES": 0,
+        "TMIN": 0,
+        "TMIN_ATTRIBUTES": 0
+      },
+      "row_count": 2282,
+      "station_id": "USC00053005",
+      "unique_date_count": 2282
+    },
+    "water_demand": {
+      "column_count": 5,
+      "csv_path": "/content/municipal-water-demand-forecasting/data/raw/water_demand/fort_collins_water_demand_2026-08-03.csv",
+      "earliest_date": "2020-01-01",
+      "latest_date": "2026-03-31",
+      "maximum_ratio_error": 4.440892098500626e-16,
+      "missing_values_by_column": {
+        "actual_projected_demand": 0,
+        "date": 0,
+        "total_actual_demand_mgd": 0,
+        "total_plant_demand_mgd": 0,
+        "total_projected_demand_mgd": 0
+      },
+      "ratio_mismatch_count": 0,
+      "row_count": 2282,
+      "unique_date_count": 2282
+    }
+  },
+  "generated_at_utc": "2026-08-03T17:14:41.078656+00:00",
+  "inputs": {
+    "water_csv": "data/raw/water_demand/fort_collins_water_demand_2026-08-03.csv",
+    "water_metadata": "data/raw/water_demand/fort_collins_water_demand_2026-08-03_metadata.json",
+    "weather_csv": "data/raw/noaa/noaa_daily_USC00053005_2026-08-03.csv",
+    "weather_metadata": "data/raw/noaa/noaa_daily_USC00053005_2026-08-03_metadata.json"
+  },
+  "status": "pass_with_warnings",
+  "summary": {
+    "check_count": 43,
+    "error_count": 0,
+    "warning_count": 1
+  }
+}
