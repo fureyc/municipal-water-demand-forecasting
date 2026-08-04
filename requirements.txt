@@ -3,3 +3,4 @@ PyYAML
 requests
 matplotlib
 jupyter
+statsmodels
