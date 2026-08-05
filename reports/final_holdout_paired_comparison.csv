@@ -1,0 +1,3 @@
+challenger,reference,n_predictions,prediction_correlation,mean_absolute_prediction_difference,median_absolute_prediction_difference,mean_daily_absolute_error_improvement,median_daily_absolute_error_improvement,fraction_days_challenger_lower_error,fraction_days_reference_lower_error,fraction_days_tied
+XGBoost B,Ridge B,365,0.9943229295381306,0.6157927208052674,0.5009267596528062,0.11743660115279275,0.12664640241947467,0.6109589041095891,0.38904109589041097,0.0
+XGBoost B,Previous-day naïve,365,0.9860506893472445,0.8550736160278319,0.5782029724121109,0.40815336305801175,0.14001316070556769,0.6219178082191781,0.3780821917808219,0.0
