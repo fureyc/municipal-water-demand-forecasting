@@ -1,121 +1,83 @@
-# Fort Collins Municipal Water-Demand Forecasting
+# Municipal Water Demand Forecasting
 
-A reproducible time-series project combining Fort Collins daily water-demand
-data with NOAA weather observations to study short-term demand forecasting and
-weather normalization.
+A reproducible one-day-ahead forecasting project that combines Fort Collins
+water-demand data with NOAA weather observations.
 
-## Project overview
+The final XGBoost model achieved a holdout mean absolute error of **0.876 million
+gallons per day**, improving on previous-day persistence by **31.8%** and ridge
+regression by **11.8%**.
 
-I created this project as a compact demonstration of how I would approach a
-municipal water-demand forecasting problem using public data. The workflow
-begins with programmatic data acquisition and validation, then combines daily
-demand with temperature, precipitation and snow observations.
+## Overview
 
-The modeling stage will preserve chronological order and begin with naïve,
-seasonal and linear baselines. More flexible models will only be introduced
-when they show a consistent improvement under the same time-aware evaluation
-procedure.
+Municipal water demand follows strong seasonal patterns, but it can also change
+quickly in response to weather, calendar effects and recent consumption. This
+project asks a practical forecasting question:
 
-This repository is intended as an analytical portfolio project rather than an
-operational forecasting or utility-planning system.
+> Can tomorrow's municipal water demand be predicted more accurately using
+> recent demand, calendar information and lagged weather than by simply using
+> today's demand?
 
-## Current status
+I developed the project as an application of statistical modeling and
+time-series forecasting to a water-management problem. I was especially
+interested in understanding not only whether a more flexible model could
+improve forecast accuracy, but when it helped and where it still failed.
 
-The following stages are complete:
+The project uses public data, chronological validation and a final untouched
+holdout period. Feature choices and model settings were fixed before the
+holdout results were viewed.
 
-- water-demand data acquisition
-- NOAA weather-data acquisition
-- raw-data validation
-- construction of a complete daily modeling table
-- reproducible data audit
-- documentation of methodological decisions and project references
+## Why I built this project
 
-Current work focuses on:
+My academic work has focused on machine learning, uncertainty quantification
+and scalable numerical methods. I built this project to explore how those
+skills could be applied to a practical conservation and utility-planning
+problem.
 
-- exploratory analysis of lagged and seasonal structure
-- supervised forecasting-feature construction
-- expanding-window model evaluation
-- naïve, seasonal and regression baselines
+Public water-system reports often distinguish between observed demand and
+weather-normalized demand. That raised several related questions for me:
+
+- How much of tomorrow's demand can be predicted from recent consumption?
+- Does lagged weather provide information beyond demand history and seasonality?
+- Do linear and nonlinear models use that information differently?
+- Under what conditions does a forecasting model fail?
+
+Rather than begin with a preferred method, I organized the project around a
+transparent comparison of simple baselines, linear models and a nonlinear
+tree-based model.
+
+## Forecasting task
+
+The target is daily municipal water demand measured in millions of gallons per
+day.
+
+The forecasting horizon is one day:
+
+\[
+\widehat{y}_{t+1}
+=
+f(\text{information available through day } t).
+\]
+
+The operational feature set includes only information that would be available
+by the end of the previous day. Same-day observed weather is evaluated only as
+a retrospective benchmark and is not used by the final operational model.
 
 ## Data
 
-The processed dataset contains 2,282 complete daily observations from
-January 1, 2020 through March 31, 2026.
+The processed dataset combines:
 
-- **Forecast target:** observed daily municipal water demand in millions of
-  gallons per day
-- **Demand source:** City of Fort Collins Daily Water Demand
-- **Weather source:** NOAA Daily Summaries
-- **Primary weather station:** `USC00053005`, FORT COLLINS, CO US
-- **Core weather variables:** daily maximum temperature, minimum temperature,
-  precipitation, snowfall and snow depth
+- daily Fort Collins water demand from the City of Fort Collins
+- daily weather observations from NOAA station `USC00053005`
+- calendar and holiday information derived from the forecast date
 
-Average wind speed is preserved in the raw NOAA snapshot but excluded from the
-initial processed table because it is the only requested weather variable with
-substantial missingness.
+The processed data cover **January 1, 2020 through March 31, 2026** and contain
+**2,282 complete daily observations**.
 
-The City's projected-demand field is retained as a comparison benchmark rather
-than used as a default predictor. The observed-to-projected ratio is also
-excluded from predictors because it directly contains the forecasting target.
+Weather variables include temperature, precipitation and snow. Lagged demand
+features include recent daily values, rolling means and rolling variability.
 
-## Methodological approach
-
-The observations are treated as an ordered daily time series rather than as
-exchangeable tabular records. Random train-test splits will not be used for the
-primary evaluation.
-
-Model comparison and tuning will use an expanding-window rolling-origin
-design. A final period will remain untouched during model selection and will
-be used for the final reported comparison.
-
-Lagged demand variables and rolling summaries will be constructed using only
-information available before each forecast date.
-
-The initial model progression is:
-
-1. naïve and seasonal forecasts
-2. calendar-only regression
-3. weather and calendar regression
-4. lagged-demand regression
-5. more flexible models when justified by validation performance
-
-Simple baselines are an important part of the project rather than a formality.
-Time-series forecasting is difficult and well-chosen seasonal or naïve methods
-can be genuinely hard to improve upon.
-
-## Key project artifacts
-
-- [Rendered data audit](reports/data_audit.html)
-- [Reproducible data-audit source](reports/data_audit.qmd)
-- [Raw-data validation report](reports/raw_data_validation.json)
-- [Methodological decisions](docs/methodological_decisions.md)
-- [Project references](docs/references.bib)
-- [Data-source configuration](config/data_sources.yml)
-
-## Repository structure
+The source data are downloaded and processed through scripts in `src/data/`.
+The resulting modeling dataset is stored at:
 
 ```text
-municipal-water-demand-forecasting/
-├── config/
-│   └── data_sources.yml
-├── data/
-│   ├── raw/
-│   │   ├── noaa/
-│   │   └── water_demand/
-│   └── processed/
-├── docs/
-│   ├── methodological_decisions.md
-│   └── references.bib
-├── reports/
-│   ├── data_audit.qmd
-│   ├── data_audit.html
-│   └── raw_data_validation.json
-├── src/
-│   └── data/
-│       ├── download_water_demand.py
-│       ├── download_noaa_weather.py
-│       ├── validate_raw_data.py
-│       └── build_daily_dataset.py
-├── .gitignore
-├── README.md
-└── requirements.txt
+data/processed/fort_collins_daily_water_weather.csv
