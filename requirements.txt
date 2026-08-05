@@ -4,3 +4,5 @@ requests
 matplotlib
 jupyter
 statsmodels
+scikit-learn
+xgboost
