@@ -52,11 +52,11 @@ day.
 
 The forecasting horizon is one day:
 
-$$
+```math
 \widehat{y}_{t+1}
 =
-f(\text{information available through day } t).
-$$
+f\!\left(\text{information available through day } t\right)
+```
 
 The operational feature set includes only information that would be available
 by the end of the previous day. Same-day observed weather is evaluated only as
