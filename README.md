@@ -63,35 +63,40 @@ data/processed/fort_collins_daily_water_weather.csv
 
 ## Evaluation design
 
-All evaluation is chronological.
+All evaluation is chronological, using an **expanding-window rolling-validation design**.
 
 The data were divided into three stages:
 
-| Stage | Period | Purpose |
-|---|---|---|
-| Initial development | 2020–2022 | Exploratory analysis and initial fitting |
-| Rolling validation | January 2023–March 2025 | Feature and model comparison |
-| Final holdout | April 2025–March 2026 | One-time final evaluation |
+| Stage               | Period                  | Purpose                                  |
+| ------------------- | ----------------------- | ---------------------------------------- |
+| Initial development | 2020–2022               | Exploratory analysis and initial fitting |
+| Rolling validation  | January 2023–March 2025 | Feature and model comparison             |
+| Final holdout       | April 2025–March 2026   | One-time final evaluation                |
 
-The rolling-validation stage contains nine quarterly validation folds. For each fold, the model is trained only on earlier dates and evaluated on the following quarter.
+The rolling-validation stage contains nine quarterly validation folds. In each fold, the model is fitted using all observations available before the validation quarter and then evaluated on that quarter. After evaluation, the validation period is incorporated into the training history for the next fold.
+
+<!-- Expanding-window validation animation will be inserted here. -->
 
 The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
 
-Mean absolute error, or MAE, is the primary metric. Root mean squared error, or RMSE, and mean absolute percentage error, or MAPE, are reported as secondary measures.
+**Mean absolute error (MAE)** is the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
 
 ## Models compared
 
-Three models form the main comparison.
+The model comparison deliberately begins with simple benchmarks before introducing additional flexibility.
 
-| Model | Role |
-|---|---|
-| Previous-day persistence | Operational baseline: tomorrow equals today |
-| Ridge regression | Regularized linear benchmark |
-| XGBoost | Nonlinear model for thresholds and feature interactions |
+| Model                    | Role                                                    |
+| ------------------------ | ------------------------------------------------------- |
+| Previous-day persistence | Operational baseline: tomorrow equals today             |
+| Ridge regression         | Regularized linear benchmark                            |
+| XGBoost                  | Nonlinear model for thresholds and feature interactions |
+
+Previous-day persistence establishes whether a fitted model improves on the strong short-term dependence already present in water demand. Ridge regression then provides a relatively simple benchmark for combining recent demand, calendar effects and lagged weather. Comparing these models with XGBoost tests whether allowing nonlinear relationships and interactions provides meaningful additional predictive value. Regression models are a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
 
 Principal component regression was also evaluated. Truncating low-variance directions consistently reduced forecast accuracy, so full-component PCR reproduced ordinary least squares and was not retained as a separate final model.
 
 Ridge regularization produced only a small improvement in average error, but it substantially improved coefficient stability in the broader feature matrix.
+
 
 ## Feature set
 
