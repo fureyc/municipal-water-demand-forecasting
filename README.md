@@ -75,7 +75,9 @@ The data were divided into three stages:
 
 The rolling-validation stage contains nine quarterly validation folds. In each fold, the model is fitted using all observations available before the validation quarter and then evaluated on that quarter. After evaluation, the validation period is incorporated into the training history for the next fold.
 
-<!-- Expanding-window validation animation will be inserted here. -->
+![Expanding-window rolling validation design](reports/figures/expanding_window_validation.gif)
+
+*Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout model development.*
 
 The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
 
