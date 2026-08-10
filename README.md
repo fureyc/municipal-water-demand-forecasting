@@ -209,7 +209,7 @@ Each quintile contains approximately 20% of the holdout observations. The first 
 
 ![Mean absolute error by daily demand-change magnitude for persistence, ridge regression and XGBoost](reports/figures/final_holdout_mae_by_change_magnitude.png)
 
-*Previous-day persistence is difficult to beat when demand barely changes. XGBoost provides its largest improvement during substantial transitions.*
+*Mean absolute error on the final holdout, grouped by the magnitude of the observed day-to-day demand change. Previous-day persistence is hardest to beat when demand is most stable, while XGBoost provides its largest gains during larger transitions.*
 
 | Daily-change group | Description | XGBoost skill relative to persistence |
 |---|---|---:|
