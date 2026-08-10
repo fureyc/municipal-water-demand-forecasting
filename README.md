@@ -102,7 +102,12 @@ Ridge regularization produced only a small improvement in average error, but it 
 
 ## Feature set
 
-The final operational feature matrix contains 54 predictors from five broad sources:
+Two related feature matrices were used during model development.
+
+- **Matrix A** is a more curated feature set used for early linear-model diagnostics and matrix-geometry analysis.
+- **Matrix B** is the broader **54-predictor operational feature matrix** used for the final model comparison and holdout evaluation.
+
+The final operational feature matrix (Matrix B) contains 54 predictors from five broad sources:
 
 - recent demand lags
 - rolling demand levels and variability
@@ -111,6 +116,8 @@ The final operational feature matrix contains 54 predictors from five broad sour
 - lagged temperature, precipitation and snow
 
 All lagged and rolling variables are shifted so that no forecast uses future information.
+
+In the figures below, labels such as **ridge B** and **XGBoost B** refer to models fitted using the final 54-feature operational matrix (Matrix B).
 
 The final XGBoost specification was selected during rolling validation and was not altered after the holdout was opened.
 
