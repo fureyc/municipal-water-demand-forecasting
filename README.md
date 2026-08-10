@@ -81,11 +81,11 @@ The rolling-validation stage contains nine quarterly validation folds. In each f
 
 The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
 
-**Mean absolute error (MAE)** is the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
+I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
 
 ## Models compared
 
-The model comparison deliberately begins with simple benchmarks before introducing additional flexibility.
+I began with simple benchmarks before introducing additional model flexibility.
 
 | Model                    | Role                                                    |
 | ------------------------ | ------------------------------------------------------- |
@@ -104,20 +104,18 @@ Ridge regularization produced only a small improvement in average error, but it 
 
 Two related feature matrices were used during model development.
 
-- **Matrix A** is a more curated feature set used for early linear-model diagnostics and matrix-geometry analysis.
-- **Matrix B** is the broader **54-predictor operational feature matrix** used for the final model comparison and holdout evaluation.
+- **Matrix A** is a curated 27-feature set used for early linear-model diagnostics and matrix-geometry analysis.
+- **Matrix B** is the broader 54-feature operational matrix used for the final model comparison and holdout evaluation. Its predictors come from five broad sources:
 
-The final operational feature matrix (Matrix B) contains 54 predictors from five broad sources:
-
-- recent demand lags
-- rolling demand levels and variability
-- annual and weekly calendar terms
-- holiday indicators
-- lagged temperature, precipitation and snow
+  - recent demand lags
+  - rolling demand levels and variability
+  - annual and weekly calendar terms
+  - holiday indicators
+  - lagged temperature, precipitation and snow
 
 All lagged and rolling variables are shifted so that no forecast uses future information.
 
-In the figures below, labels such as **ridge B** and **XGBoost B** refer to models fitted using the final 54-feature operational matrix (Matrix B).
+Unless otherwise noted, the final Ridge and XGBoost results reported below use Matrix B.
 
 The final XGBoost specification was selected during rolling validation and was not altered after the holdout was opened.
 
@@ -138,7 +136,7 @@ It produced lower daily absolute error than ridge on approximately 61% of holdou
 
 ![Bar chart comparing final holdout mean absolute error for previous-day persistence, ridge regression and XGBoost](reports/figures/final_holdout_model_comparison.png)
 
-*Final holdout performance. XGBoost produced the lowest mean absolute error, followed by ridge regression and previous-day persistence.*
+*Mean absolute error on the final holdout. XGBoost produced the lowest MAE, followed by Ridge and previous-day persistence.*
 
 ## Validation and holdout consistency
 
@@ -273,7 +271,8 @@ municipal-water-demand-forecasting/
 │   └── references.bib
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
-│   └── 02_model_comparison.ipynb
+│   ├── 02_model_comparison.ipynb
+│   └── 03_readme_visualizations.ipynb
 ├── reports/
 │   ├── figures/
 │   ├── final_holdout_metrics.csv
@@ -310,6 +309,9 @@ The principal analysis files are:
 - [`reports/final_holdout_predictions.csv`](reports/final_holdout_predictions.csv)  
   Daily observations and forecasts for the untouched holdout.
 
+- [`notebooks/03_readme_visualizations.ipynb`](notebooks/03_readme_visualizations.ipynb)  
+  Reproducible generation of the README evaluation animation and final holdout figures.
+
 ## Reproducing the analysis
 
 Create a Python environment and install the project dependencies:
@@ -335,6 +337,9 @@ After building the processed dataset, run the notebooks in order:
 2. `notebooks/02_model_comparison.ipynb`
 
 The final exported metrics, predictions and diagnostic tables are stored under `reports/`.
+
+The README figures can be regenerated separately with
+`notebooks/03_readme_visualizations.ipynb`.
 
 ## Project status
 
