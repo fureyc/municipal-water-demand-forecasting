@@ -159,7 +159,7 @@ The model's 90th-percentile, 95th-percentile and maximum absolute errors were al
 
 ![Observed daily water demand with XGBoost and ridge predictions during the final holdout](reports/figures/final_holdout_observed_vs_predicted.png)
 
-*Observed and predicted demand from April 2025 through March 2026. Both fitted models track the annual cycle, while the largest discrepancies occur during abrupt increases, decreases and reversals.*
+*Observed daily demand and predictions from the final Ridge and XGBoost models during the April 2025–March 2026 holdout year. Both models track the annual cycle, while the largest discrepancies occur during abrupt increases, decreases and reversals.*
 
 Summer remains the most difficult season in absolute terms. XGBoost's summer MAE was 1.207 MGD, compared with 0.636 MGD during winter.
 
