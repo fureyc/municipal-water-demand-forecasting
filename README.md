@@ -20,7 +20,7 @@ This project asks a practical forecasting question:
 
 I developed the project as an application of statistical modeling and time-series forecasting to a water-management problem. I was interested not only in whether a more flexible model could improve forecast accuracy, but also in when it helped and where it still failed.
 
-The project uses public data, chronological validation and a final untouched holdout period. Feature choices, model families and hyperparameters were fixed before the holdout results were viewed.
+The project uses public data, chronological validation and an originally untouched final holdout period. Feature choices, model families and hyperparameters were fixed before the holdout results were viewed.
 
 ## Why I built this project
 
@@ -85,7 +85,7 @@ The rolling-validation stage contains nine quarterly validation folds. In each f
 
 *Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout model development.*
 
-The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
+The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days. The later probabilistic-forecasting extension is treated as new analysis rather than a retroactive modification of this point-model comparison. It uses earlier chronological out-of-fold forecasts for method development and calibration and does not reuse the opened holdout as a new untouched test set.
 
 I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
 
@@ -246,7 +246,7 @@ urban water-demand forecasting
 
 I began with linear quantile regression as a transparent benchmark, estimating the
 conditional 10th, 50th and 90th percentiles of demand. The resulting central interval
-contained about **74.4%** of rolling-validation observations rather than its nominal
+contained about **74.4%** of observations over the 2023–March 2025 chronological evaluation period rather than its nominal
 80%, which motivated a second question: could the quantile forecasts be calibrated
 while respecting the sequential nature of the data?
 
@@ -368,20 +368,31 @@ The principal analysis files are:
 - [`notebooks/02_model_comparison.ipynb`](notebooks/02_model_comparison.ipynb)  
   Baselines, linear models, XGBoost, ablations, SHAP analysis, residual diagnostics and final holdout evaluation.
 
+- [`notebooks/03_probabilistic_forecasting.ipynb`](notebooks/03_probabilistic_forecasting.ipynb)  
+  Linear quantile regression and quantile XGBoost comparison, probabilistic scoring and calibration diagnostics.
+
+- [`notebooks/04_time_series_uncertainty_calibration.ipynb`](notebooks/04_time_series_uncertainty_calibration.ipynb)  
+  Sequential conformal calibration, window-length selection and comparison of rolling CQR, ACI and conformal PID.
+
+- [`notebooks/05_interpreting_probabilistic_forecasts.ipynb`](notebooks/05_interpreting_probabilistic_forecasts.ipynb)  
+  Interpretation of the selected QR + ACI system across weather, demand and high-uncertainty regimes.
+
+Supporting project files include:
+
 - [`config/modeling.yml`](config/modeling.yml)  
   Forecast horizon, chronological splits, evaluation metrics and modeling configuration.
 
 - [`docs/methodological_decisions.md`](docs/methodological_decisions.md)  
   Record of project decisions and their rationale.
 
+- [`notebooks/06_readme_visualizations.ipynb`](notebooks/06_readme_visualizations.ipynb)  
+  Reproducible generation of README figures.
+
 - [`reports/final_holdout_metrics.csv`](reports/final_holdout_metrics.csv)  
-  Final model metrics.
+  Final point-model metrics.
 
 - [`reports/final_holdout_predictions.csv`](reports/final_holdout_predictions.csv)  
-  Daily observations and forecasts for the untouched holdout.
-
-- [`notebooks/03_readme_visualizations.ipynb`](notebooks/03_readme_visualizations.ipynb)  
-  Reproducible generation of the README evaluation animation and final holdout figures.
+  Daily observations and forecasts for the original untouched holdout.
 
 ## Reproducing the analysis
 
@@ -402,28 +413,36 @@ build_daily_dataset.py
 
 Data-source settings are stored in `config/data_sources.yml`. Modeling periods and evaluation settings are stored in `config/modeling.yml`.
 
-After building the processed dataset, run the notebooks in order:
+After building the processed dataset, run the analysis notebooks in order:
 
 1. `notebooks/01_exploratory_analysis.ipynb`
 2. `notebooks/02_model_comparison.ipynb`
+3. `notebooks/03_probabilistic_forecasting.ipynb`
+4. `notebooks/04_time_series_uncertainty_calibration.ipynb`
+5. `notebooks/05_interpreting_probabilistic_forecasts.ipynb`
 
-The final exported metrics, predictions and diagnostic tables are stored under `reports/`.
+The point-forecasting holdout outputs are stored directly under `reports/`.
+Probabilistic calibration and interpretation summaries are stored under
+`reports/probabilistic/`.
 
-The README figures can be regenerated separately with
-`notebooks/03_readme_visualizations.ipynb`.
+README figures can be regenerated separately with
+`notebooks/06_readme_visualizations.ipynb`.
 
 ## Project status
 
-The current modeling analysis is complete.
+The current point-forecasting and probabilistic-forecasting analyses are complete.
 
-The final holdout has been opened and will not be reused for further feature selection, hyperparameter tuning or model comparison. Any additional modeling ideas will be treated as new work rather than retroactive improvements to the reported result.
+The original final holdout has been opened and will not be reused for further feature
+selection, hyperparameter tuning or model comparison. The subsequent probabilistic
+analysis is treated as new work and uses earlier chronological out-of-fold forecasts
+rather than retroactively modifying the reported holdout result.
 
 Potential extensions include:
 
 - archived one-day-ahead weather forecasts
 - dynamic blending of persistence and XGBoost
 - explicit transition or regime-switching models
-- prediction intervals
+- multi-step or hourly probabilistic forecasting
 - evaluation on another municipal water system
 - an interactive forecasting and conservation dashboard
 
@@ -434,3 +453,5 @@ This project reinforced an important forecasting lesson for me: a more flexible 
 Previous-day persistence remains extremely effective when demand is stable. The nonlinear model provides its greatest value during high-demand periods and substantial transitions, even though those periods also contain its largest remaining errors.
 
 That distinction between average performance, operational value and model limitations became one of the most useful findings of the project.
+
+The probabilistic extension added a related lesson: weather information can help describe not only the expected level of demand, but also when a forecast should be treated with greater or lesser uncertainty.
