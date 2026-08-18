@@ -1,0 +1,4 @@
+variable,spearman_with_raw_qr_width,spearman_with_aci_correction,spearman_with_final_aci_width
+Prior-day max temperature,0.667274431163235,-0.20831735781220423,0.6331039262280538
+Predicted median demand,0.7083615577125036,-0.17586985949334585,0.7050567302973811
+Observed demand,0.6889283406457685,-0.1903144553936758,0.6815880812096083

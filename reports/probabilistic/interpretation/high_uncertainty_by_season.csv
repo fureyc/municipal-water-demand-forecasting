@@ -1,0 +1,5 @@
+season,n_days,share_of_high_uncertainty_days
+Fall,9,0.10843373493975904
+Spring,11,0.13253012048192772
+Summer,62,0.7469879518072289
+Winter,1,0.012048192771084338
