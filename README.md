@@ -2,7 +2,13 @@
 
 A reproducible one-day-ahead forecasting project combining Fort Collins water-demand data with NOAA weather observations.
 
-The final XGBoost model achieved a holdout mean absolute error of **0.876 million gallons per day**, improving on previous-day persistence by **31.8%** and ridge regression by **11.8%**.
+The final XGBoost model achieved a holdout mean absolute error of **0.876 million
+gallons per day**, improving on previous-day persistence by **31.8%** and ridge
+regression by **11.8%**.
+
+I then extended the analysis from point prediction to probabilistic forecasting,
+using quantile regression and sequential conformal calibration to study when demand
+forecasts are more or less uncertain.
 
 ## Overview
 
@@ -224,6 +230,57 @@ For the largest increases, XGBoost underpredicted demand by approximately 1.27 M
 The largest holdout error occurred on January 16, 2026, when demand increased by 6.28 MGD and the model underpredicted by 6.05 MGD. Demand then fell sharply the following day, producing an overprediction.
 
 This illustrates how a strong recent-demand signal can become temporarily misleading during rapid reversals.
+
+## From point forecasts to uncertainty
+
+Point forecasts answer only part of the forecasting problem. A utility may also want
+to know when tomorrow's demand estimate is relatively precise and when a wider range
+of outcomes is plausible.
+
+I therefore made a first pass at **probabilistic water-demand forecasting** using the
+same chronological evaluation philosophy as the point-forecasting analysis. Quantile
+regression provides a direct way to estimate conditional percentiles rather than only
+the conditional mean, and has been studied specifically for one-day-ahead probabilistic
+urban water-demand forecasting
+([Papacharalampous & Langousis, 2022](https://doi.org/10.1029/2021WR030216)).
+
+I began with linear quantile regression as a transparent benchmark, estimating the
+conditional 10th, 50th and 90th percentiles of demand. The resulting central interval
+contained about **74.4%** of rolling-validation observations rather than its nominal
+80%, which motivated a second question: could the quantile forecasts be calibrated
+while respecting the sequential nature of the data?
+
+Conformalized quantile regression provides a general framework for combining
+quantile forecasts with distribution-free calibration
+([Romano et al., 2019](https://proceedings.neurips.cc/paper/2019/hash/5103c3584b063c431bd1268e9b5e76fb-Abstract.html)).
+Because water demand is a time series rather than an exchangeable regression sample,
+I focused on sequential variants designed to adapt as forecast errors evolve through
+time. These included **Adaptive Conformal Inference**
+([Gibbs & Candès, 2021](https://proceedings.neurips.cc/paper/2021/hash/0d441de75945e5acbc865406fc9a2559-Abstract.html))
+and **Conformal PID**
+([Angelopoulos et al., 2023](https://proceedings.neurips.cc/paper_files/paper/2023/hash/47f2fad8c1111d07f83c91be7870f8db-Abstract-Conference.html)),
+along with a simpler rolling conformal baseline.
+
+The comparison led to the selection of **two-sided ACI with a 180-day
+conformity-score history**. On the 2023–March 2025 evaluation period, calibration
+increased empirical coverage from **74.4% to 80.6%**, with average interval width
+increasing from **2.58 to 2.88 MGD**. Lower- and upper-tail miss rates were both
+close to 10%.
+
+The analysis also extended the earlier weather result. Warmer prior-day conditions
+were associated with both **higher predicted demand and wider forecast distributions**.
+Average raw quantile-regression width increased from about **1.66 MGD** in the coolest
+temperature quintile to **4.04 MGD** in the warmest. Nearly **75% of the widest
+10% of calibrated intervals occurred during summer**.
+
+Most of this weather-dependent variation was already captured by quantile regression;
+ACI generally supplied a smaller sequential correction based on recent forecast errors.
+The widest intervals therefore tended to occur when the forecasting model itself
+recognized that demand was difficult to predict.
+
+These results are predictive rather than causal, and calibration was not uniform across
+every weather or demand regime. The analysis should be viewed as a rigorous first pass
+at uncertainty quantification rather than a complete operational probabilistic model.
 
 ## Technical findings
 
