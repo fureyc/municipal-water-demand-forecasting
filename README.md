@@ -273,6 +273,14 @@ Average raw quantile-regression width increased from about **1.66 MGD** in the c
 temperature quintile to **4.04 MGD** in the warmest. Nearly **75% of the widest
 10% of calibrated intervals occurred during summer**.
 
+
+![Average probabilistic forecast width by prior-day temperature group](reports/figures/probabilistic_width_by_temperature.png)
+
+*Average 10th-to-90th percentile quantile-regression width and ACI-calibrated
+interval width by prior-day maximum-temperature quintile. Forecast uncertainty
+increases substantially in warmer conditions, and most of that widening is already
+present in the conditional quantile forecasts.*
+
 Most of this weather-dependent variation was already captured by quantile regression;
 ACI generally supplied a smaller sequential correction based on recent forecast errors.
 The widest intervals therefore tended to occur when the forecasting model itself
@@ -329,9 +337,15 @@ municipal-water-demand-forecasting/
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
 │   ├── 02_model_comparison.ipynb
-│   └── 03_readme_visualizations.ipynb
+│   ├── 03_probabilistic_forecasting.ipynb
+│   ├── 04_time_series_uncertainty_calibration.ipynb
+│   ├── 05_interpreting_probabilistic_forecasts.ipynb
+│   └── 06_readme_visualizations.ipynb
 ├── reports/
 │   ├── figures/
+│   ├── probabilistic/
+│   │   ├── calibration/
+│   │   └── interpretation/
 │   ├── final_holdout_metrics.csv
 │   ├── final_holdout_predictions.csv
 │   └── final_holdout_evaluation.json
