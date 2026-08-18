@@ -1,0 +1,5 @@
+method,selected_window,calibration_runtime_seconds,approx_scalar_state
+Trailing CQR,365,0.10971720300000243,365
+Two-sided ACI,180,0.096865643000001,181
+Two-sided PID,365,0.10586401300000148,367
+Asymmetric PID,365,0.1978790809999964,733
