@@ -24,7 +24,7 @@ The project uses public data, chronological validation and an originally untouch
 
 ## Why I built this project
 
-My academic work has focused on machine learning, uncertainty quantification and scalable numerical methods. I built this project to explore how those skills could be applied to a practical water-conservation and utility-planning problem.
+My academic work has focused on machine learning, uncertainty quantification and scalable numerical methods. I built this project to explore how those skills could be applied to a practical utility-planning problem.
 
 Public water-system reports often distinguish between observed demand and weather-normalized demand. That raised several related questions for me:
 
@@ -85,7 +85,7 @@ The rolling-validation stage contains nine quarterly validation folds. In each f
 
 *Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout model development.*
 
-The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days. The later probabilistic-forecasting extension is treated as new analysis rather than a retroactive modification of this point-model comparison. It uses earlier chronological out-of-fold forecasts for method development and calibration and does not reuse the opened holdout as a new untouched test set.
+The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days. The later probabilistic-forecasting extension is treated as separate analysis rather than a retroactive modification of the point-model comparison. It uses earlier chronological out-of-fold forecasts for method development and calibration and does not reuse the holdout test set.
 
 I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
 
@@ -148,7 +148,7 @@ It produced lower daily absolute error than ridge on approximately 61% of holdou
 
 XGBoost's rolling-validation MAE was 0.838 MGD. Its final holdout MAE was 0.876 MGD, an increase of approximately 4.5%.
 
-Its RMSE was nearly unchanged:
+Its RMSE was effectively unchanged on the final holdout, remaining 1.245 MGD to three decimal places:
 
 | Evaluation stage | XGBoost RMSE |
 |---|---:|
@@ -165,11 +165,10 @@ The model's 90th-percentile, 95th-percentile and maximum absolute errors were al
 
 *Observed daily demand and predictions from the final Ridge and XGBoost models during the April 2025–March 2026 holdout year. Both models track the annual cycle, while the largest discrepancies occur during abrupt increases, decreases and reversals.*
 
-Summer remains the most difficult season in absolute terms. XGBoost's summer MAE was 1.207 MGD, compared with 0.636 MGD during winter.
+The seasonal difference in forecast error reflects an important feature of the underlying demand series. Demand rises sharply into the summer, when both its level and day-to-day variability are substantially greater than during the lower-demand winter months.
 
+Summer is therefore the most difficult season in absolute terms. XGBoost's summer MAE was 1.207 MGD, compared with 0.636 MGD during winter.
 However, summer is also where the model provides some of its greatest value. XGBoost improved on persistence by approximately 47% during summer and by more than 48% in both July and August.
-
-During stable lower-demand months, previous-day persistence remains difficult to beat. XGBoost was slightly worse than persistence in April and March and was nearly tied in December.
 
 ## What the model learned
 
@@ -177,7 +176,7 @@ The feature analysis supports a consistent predictive interpretation.
 
 ### Recent demand is the forecast anchor
 
-Previous-day demand is the dominant feature under both tree gain and out-of-fold SHAP importance. Two-day demand, seven-day demand and short rolling means provide additional information about the recent level.
+Previous-day demand is the dominant feature under both tree gain and out-of-fold SHAP importance. SHAP helps explain the model's forecasts by measuring how much each feature tends to influence its predictions; using out-of-fold observations makes this a check on behavior outside the data used for fitting. Two-day demand, seven-day demand and short rolling means provide additional information about the recent demand level.
 
 ### Calendar information provides context
 
@@ -207,7 +206,7 @@ It recognizes many increases and decreases, but it tends to:
 - overpredict sharp decreases
 - lag behind rapid reversals
 
-To study this behavior, holdout dates were divided into **five equally sized groups**, called quintiles, according to the absolute change in demand from the previous day.
+To study this behavior, holdout dates were divided into five equally sized groups, called quintiles, according to the absolute change in demand from the previous day.
 
 Each quintile contains approximately 20% of the holdout observations. The first group contains the smallest daily changes and the fifth contains the largest.
 
@@ -235,20 +234,19 @@ This illustrates how a strong recent-demand signal can become temporarily mislea
 
 Point forecasts answer only part of the forecasting problem. A utility may also want
 to know when tomorrow's demand estimate is relatively precise and when a wider range
-of outcomes is plausible.
+of outcomes is more plausible.
 
-I therefore made a first pass at **probabilistic water-demand forecasting** using the
+I therefore implemented a simple **probabilistic water-demand forecasting** analysis using the
 same chronological evaluation philosophy as the point-forecasting analysis. Quantile
 regression provides a direct way to estimate conditional percentiles rather than only
 the conditional mean, and has been studied specifically for one-day-ahead probabilistic
 urban water-demand forecasting
 ([Papacharalampous & Langousis, 2022](https://doi.org/10.1029/2021WR030216)).
 
-I began with linear quantile regression as a transparent benchmark, estimating the
-conditional 10th, 50th and 90th percentiles of demand. The resulting central interval
-contained about **74.4%** of observations over the 2023–March 2025 chronological evaluation period rather than its nominal
-80%, which motivated a second question: could the quantile forecasts be calibrated
-while respecting the sequential nature of the data?
+I began with linear quantile regression as a transparent benchmark, estimating the conditional 10th, 50th and 90th percentiles of demand. 
+The resulting central interval contained about **74.4%** of observations over the 2023–March 2025 chronological evaluation period rather than its nominal 80%.
+
+This motivated a second question: could the quantile forecasts be improved using conformal prediction? Conformal prediction is a relatively modern framework for uncertainty quantification that calibrates prediction intervals using observed forecast errors, with classical methods providing finite-sample coverage guarantees under exchangeability. Extensions such as conformalized quantile regression and methods designed for time-series data adapt this idea to quantile forecasts and temporally ordered observations.
 
 Conformalized quantile regression provides a general framework for combining
 quantile forecasts with distribution-free calibration
@@ -268,7 +266,7 @@ increasing from **2.58 to 2.88 MGD**. Lower- and upper-tail miss rates were both
 close to 10%.
 
 The analysis also extended the earlier weather result. Warmer prior-day conditions
-were associated with both **higher predicted demand and wider forecast distributions**.
+were associated with both higher predicted demand and wider forecast distributions.
 Average raw quantile-regression width increased from about **1.66 MGD** in the coolest
 temperature quintile to **4.04 MGD** in the warmest. Nearly **75% of the widest
 10% of calibrated intervals occurred during summer**.
