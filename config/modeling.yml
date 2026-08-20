@@ -126,4 +126,4 @@ diagnostics:
     repeat_within_training_windows: true
 
 reproducibility:
-  random_seed: 42
+  random_seed: 2026
