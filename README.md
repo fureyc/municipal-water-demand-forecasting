@@ -101,7 +101,7 @@ I began with simple benchmarks before introducing additional model flexibility.
 
 Previous-day persistence establishes whether a fitted model improves on the strong short-term dependence already present in water demand. Ridge regression then provides a relatively simple benchmark for combining recent demand, calendar effects and lagged weather. Comparing these models with XGBoost tests whether allowing nonlinear relationships and interactions provides meaningful additional predictive value. Regression models are a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
 
-Principal component regression was also evaluated. Truncating low-variance directions consistently reduced forecast accuracy, so full-component PCR reproduced ordinary least squares and was not retained as a separate final model.
+Principal component regression was also evaluated. Truncating low-variance directions consistently reduced forecast accuracy and so was not retained as a separate final model.
 
 Ridge regularization produced only a small improvement in average error, but it substantially improved coefficient stability in the broader feature matrix.
 
