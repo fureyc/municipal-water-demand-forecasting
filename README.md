@@ -422,6 +422,9 @@ Supporting project files include:
 
 ## Reproducing the analysis
 
+The reported analysis was tested with **Python 3.12.13** and the package versions
+pinned in `requirements.txt`.
+
 Create a Python environment and install the project dependencies:
 
 ```bash
