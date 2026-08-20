@@ -1,14 +1,9 @@
 # Municipal Water Demand Forecasting
-
 A reproducible one-day-ahead forecasting project combining Fort Collins water-demand data with NOAA weather observations.
 
-The final XGBoost model achieved a holdout mean absolute error of **0.876 million
-gallons per day**, improving on previous-day persistence by **31.8%** and ridge
-regression by **11.8%**.
+The final XGBoost point forecast achieved a holdout mean absolute error of **0.876 million gallons per day**, improving on previous-day persistence by **31.8%** and ridge regression by **11.8%**.
 
-I then extended the analysis from point prediction to probabilistic forecasting,
-using quantile regression and sequential conformal calibration to study when demand
-forecasts are more or less uncertain.
+I then extended the project to probabilistic forecasting. A linear quantile-regression model combined with sequential conformal calibration produced **78.6% empirical coverage** for a nominal 80% interval during the final April 2025–March 2026 out-of-sample probabilistic evaluation.
 
 ## Overview
 
@@ -20,7 +15,7 @@ This project asks a practical forecasting question:
 
 I developed the project as an application of statistical modeling and time-series forecasting to a water-management problem. I was interested not only in whether a more flexible model could improve forecast accuracy, but also in when it helped and where it still failed.
 
-The project uses public data, chronological validation and an originally untouched final holdout period. Feature choices, model families and hyperparameters were fixed before the holdout results were viewed.
+The project uses public data and chronological validation throughout. Point-model features, model families and hyperparameters were fixed before the original final holdout was viewed. The later probabilistic system was developed separately using earlier chronological forecasts, with its quantile-regression and calibration choices fixed before the final out-of-sample probabilistic evaluation.
 
 ## Why I built this project
 
@@ -71,23 +66,27 @@ data/processed/fort_collins_daily_water_weather.csv
 
 All evaluation is chronological, using an **expanding-window rolling-validation design**.
 
-The data were divided into three stages:
+For the point-forecasting analysis, the data were divided into three stages:
 
-| Stage               | Period                  | Purpose                                  |
-| ------------------- | ----------------------- | ---------------------------------------- |
-| Initial development | 2020–2022               | Exploratory analysis and initial fitting |
-| Rolling validation  | January 2023–March 2025 | Feature and model comparison             |
-| Final holdout       | April 2025–March 2026   | One-time final evaluation                |
+| Stage               | Period                  | Purpose                                   |
+| ------------------- | ----------------------- | ----------------------------------------- |
+| Initial development | 2020–2022               | Exploratory analysis and initial fitting  |
+| Rolling validation  | January 2023–March 2025 | Feature and model comparison              |
+| Final holdout       | April 2025–March 2026   | One-time final point-forecast evaluation  |
 
 The rolling-validation stage contains nine quarterly validation folds. In each fold, the model is fitted using all observations available before the validation quarter and then evaluated on that quarter. After evaluation, the validation period is incorporated into the training history for the next fold.
 
 ![Expanding-window rolling validation design](reports/figures/expanding_window_validation.gif)
 
-*Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout model development.*
+*Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout point-model development.*
 
-The final holdout was not used to choose features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days. The later probabilistic-forecasting extension is treated as separate analysis rather than a retroactive modification of the point-model comparison. It uses earlier chronological out-of-fold forecasts for method development and calibration and does not reuse the holdout test set.
+The final holdout was not used to choose point-forecasting features, model families or hyperparameters. After the validation analysis was completed, each final point model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
 
-I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
+The probabilistic-forecasting extension was developed separately using chronological out-of-fold forecasts from January 2023 through March 2025. The quantile-regression specification, conformal-calibration method, 180-day conformity-score history and ACI adaptation rate were all fixed before probabilistic performance was examined over April 2025–March 2026. Because that same calendar period had already been inspected during the point-forecasting analysis, I describe this as a final out-of-sample probabilistic evaluation rather than as a newly untouched holdout.
+
+For point forecasts, I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
+
+For probabilistic forecasts, I focus on **empirical interval coverage** relative to the nominal 80% target together with **interval width**, lower- and upper-tail miss rates and quantile pinball loss. Coverage measures calibration, while interval width helps distinguish useful calibration from intervals that achieve coverage simply by becoming excessively wide.
 
 ## Models compared
 
@@ -96,10 +95,10 @@ I began with simple benchmarks before introducing additional model flexibility.
 | Model                    | Role                                                    |
 | ------------------------ | ------------------------------------------------------- |
 | Previous-day persistence | Operational baseline: tomorrow equals today             |
-| Ridge regression         | Regularized linear benchmark                            |
+| Ridge-regression         | Regularized linear benchmark                            |
 | XGBoost                  | Nonlinear model for thresholds and feature interactions |
 
-Previous-day persistence establishes whether a fitted model improves on the strong short-term dependence already present in water demand. Ridge regression then provides a relatively simple benchmark for combining recent demand, calendar effects and lagged weather. Comparing these models with XGBoost tests whether allowing nonlinear relationships and interactions provides meaningful additional predictive value. Regression models are a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
+Previous-day persistence establishes whether a fitted model improves on the strong short-term dependence already present in water demand. Ridge-regression then provides a relatively simple benchmark for combining recent demand, calendar effects and lagged weather. Comparing these models with XGBoost tests whether allowing nonlinear relationships and interactions provides meaningful additional predictive value. Regression models are a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
 
 Principal component regression was also evaluated. Truncating low-variance directions consistently reduced forecast accuracy and so was not retained as a separate final model.
 
@@ -121,7 +120,7 @@ Two related feature matrices were used during model development.
 
 All lagged and rolling variables are shifted so that no forecast uses future information.
 
-Unless otherwise noted, the final Ridge and XGBoost results reported below use Matrix B.
+Unless otherwise noted, the final ridge-regression and XGBoost results reported below use Matrix B.
 
 The final XGBoost specification was selected during rolling validation and was not altered after the holdout was opened.
 
@@ -130,7 +129,7 @@ The final XGBoost specification was selected during rolling validation and was n
 | Model | MAE (MGD) | RMSE (MGD) | MAPE |
 |---|---:|---:|---:|
 | Previous-day persistence | 1.284 | 1.849 | 6.14% |
-| Ridge regression | 0.994 | 1.340 | 5.32% |
+| Ridge-regression | 0.994 | 1.340 | 5.32% |
 | **XGBoost** | **0.876** | **1.245** | **4.60%** |
 
 The selected XGBoost model reduced holdout MAE by:
@@ -230,6 +229,37 @@ The largest holdout error occurred on January 16, 2026, when demand increased by
 
 This illustrates how a strong recent-demand signal can become temporarily misleading during rapid reversals.
 
+## Additional point-forecasting diagnostics
+
+Several additional analyses were used to evaluate the modeling decisions.
+
+### Linear-system geometry
+
+The curated 27-feature matrix was well conditioned after standardization. The broader 54-feature matrix was more correlated, primarily because direct demand lags and rolling demand summaries contain overlapping information.
+
+The broader matrix nevertheless improved prediction. Ridge regularization reduced coefficient variation and the condition number of the penalized system without discarding predictive directions.
+
+### Principal component regression
+
+PCR truncation did not improve validation performance. Even specifications retaining more than 99% of predictor variance performed worse than full ordinary least squares.
+
+This indicates that several low-variance directions contained useful predictive information. Predictor variance alone was therefore not a reliable feature-selection criterion.
+
+### Model interpretation
+
+Out-of-fold SHAP values were calculated only for validation observations, with the selected XGBoost model refitted separately within each fold.
+
+The leading predictors were stable across folds, though correlated demand and weather variables sometimes exchanged lower-ranked importance. Feature groups, ablation results and multiple importance measures were therefore emphasized over exact individual rankings.
+
+### Residual dependence
+
+The final XGBoost residuals showed little immediate dependence:
+
+- lag-one residual autocorrelation: 0.008
+- lag-seven residual autocorrelation: 0.109
+
+Longer-range structure remained at 14 and 28 days. The final residuals should not be treated as completely independent.
+
 ## From point forecasts to uncertainty
 
 Point forecasts answer only part of the forecasting problem. A utility may also want
@@ -265,59 +295,50 @@ increased empirical coverage from **74.4% to 80.6%**, with average interval widt
 increasing from **2.58 to 2.88 MGD**. Lower- and upper-tail miss rates were both
 close to 10%.
 
-The analysis also extended the earlier weather result. Warmer prior-day conditions
-were associated with both higher predicted demand and wider forecast distributions.
-Average raw quantile-regression width increased from about **1.66 MGD** in the coolest
-temperature quintile to **4.04 MGD** in the warmest. Nearly **75% of the widest
-10% of calibrated intervals occurred during summer**.
+## Final out-of-sample probabilistic evaluation
 
+After selecting the probabilistic forecasting system using the 2023–March 2025 chronological evaluation period, I fixed the model and calibration choices before examining probabilistic performance over the subsequent year. The three linear quantile-regression models were fitted once using all eligible observations through March 31, 2025. The previously selected two-sided ACI procedure with a 180-day conformity-score history was then continued sequentially from its pre-evaluation state, using each observed outcome only to update the calibration applied to future forecasts.
 
-![Average probabilistic forecast width by prior-day temperature group](reports/figures/probabilistic_width_by_temperature.png)
+Because April 2025–March 2026 had already been examined during the separate point-forecasting analysis, I treat this as a final out-of-sample probabilistic evaluation rather than as a newly untouched holdout.
 
-*Average 10th-to-90th percentile quantile-regression width and ACI-calibrated
-interval width by prior-day maximum-temperature quintile. Forecast uncertainty
-increases substantially in warmer conditions, and most of that widening is already
-present in the conditional quantile forecasts.*
+The raw 10th-to-90th percentile quantile-regression interval covered **71.8%** of observations, below its nominal 80% target. Sequential ACI increased coverage to **78.6%**, a gain of **6.8 percentage points**, while average interval width increased from 2.709 to 3.008 MGD.
 
-Most of this weather-dependent variation was already captured by quantile regression;
-ACI generally supplied a smaller sequential correction based on recent forecast errors.
-The widest intervals therefore tended to occur when the forecasting model itself
-recognized that demand was difficult to predict.
+| Method                   |  Coverage | Average width |  Median width | Lower-tail misses | Upper-tail misses |
+| ------------------------ | --------: | ------------: | ------------: | ----------------: | ----------------: |
+| Raw linear QR            |     71.8% |     2.709 MGD |     2.410 MGD |             14.5% |             13.7% |
+| **Two-sided ACI (180d)** | **78.6%** | **3.008 MGD** | **2.740 MGD** |         **10.4%** |         **11.0%** |
 
-These results are predictive rather than causal, and calibration was not uniform across
-every weather or demand regime. The analysis should be viewed as a rigorous first pass
-at uncertainty quantification rather than a complete operational probabilistic model.
+The calibrated intervals therefore recovered most of the raw QR coverage gap with an average-width increase of approximately **11.1%**. The remaining misses were also well balanced between the lower and upper tails.
 
-## Technical findings
+![Observed daily water demand with the ACI-calibrated 80% prediction interval during the final probabilistic evaluation](reports/figures/final_probabilistic_holdout.png)
 
-Several additional analyses were used to evaluate the modeling decisions.
+*Observed daily water demand and the ACI-calibrated 80% prediction interval during the April 2025–March 2026 final out-of-sample probabilistic evaluation. The interval width changes substantially through the year, reflecting both variation in the underlying quantile forecasts and sequential calibration based on recent forecast errors.*
 
-### Linear-system geometry
+The annual result is close to the nominal target, but it does not imply uniform calibration across every period or demand regime. The next section examines how forecast uncertainty and calibration vary with weather, season and changing forecast conditions.
 
-The curated 27-feature matrix was well conditioned after standardization. The broader 54-feature matrix was more correlated, primarily because direct demand lags and rolling demand summaries contain overlapping information.
+## Interpreting forecast uncertainty
+The prediction intervals provide information that a point forecast alone cannot: their changing width indicates when daily demand is relatively predictable and when a wider range of outcomes is plausible.
 
-The broader matrix nevertheless improved prediction. Ridge regularization reduced coefficient variation and the condition number of the penalized system without discarding predictive directions.
+Most of that day-to-day variation is already present in the underlying quantile-regression forecasts. In the earlier chronological evaluation period, the raw 80% QR interval widened from approximately 1.66 MGD in the coolest prior-day temperature quintile to 4.04 MGD in the warmest. About three-quarters of the widest 10% of calibrated intervals also occurred during summer.
 
-### Principal component regression
+![Raw quantile-regression interval width across prior-day temperature quintiles](reports/figures/probabilistic_width_by_temperature.png)
 
-PCR truncation did not improve validation performance. Even specifications retaining more than 99% of predictor variance performed worse than full ordinary least squares.
+This pattern is consistent with the point-forecasting results: warmer conditions tend to coincide with both higher demand and greater variability. The probabilistic model therefore does not merely predict a higher level of water use on warm days; it also represents those forecasts as less certain.
 
-This indicates that several low-variance directions contained useful predictive information. Predictor variance alone was therefore not a reliable feature-selection criterion.
+The final out-of-sample evaluation reinforces this interpretation. Raw QR intervals were already widest during summer, averaging approximately 4.30 MGD. ACI did not improve summer coverage and slightly reduced average interval width, suggesting that much of the additional uncertainty associated with high-demand conditions was already represented by the conditional quantile forecasts.
 
-### Model interpretation
+The largest incremental calibration gains instead appeared in fall and winter. Fall coverage increased from **65.9% to 81.3%**, while winter coverage increased from **71.1% to 80.0%**. These seasonal summaries are descriptive rather than separate calibration targets because the ACI controller evolves continuously through time rather than restarting at seasonal boundaries.
 
-Out-of-fold SHAP values were calculated only for validation observations, with the selected XGBoost model refitted separately within each fold.
+This highlights a useful division of labor between the two components of the forecasting system:
 
-The leading predictors were stable across folds, though correlated demand and weather variables sometimes exchanged lower-ranked importance. Feature groups, ablation results and multiple importance measures were therefore emphasized over exact individual rankings.
+- **Quantile regression describes how forecast uncertainty changes with observed conditions.**
+- **ACI provides a sequential correction when recent forecast errors indicate that the raw intervals are poorly calibrated.**
 
-### Residual dependence
+ACI is therefore not acting as a second weather model or applying a fixed inflation factor to every interval. Its adjustment changes through time according to recent forecast performance. In the final evaluation, 90-day rolling ACI coverage ranged from approximately **73.3% to 85.6%**, illustrating that annual coverage near the nominal target does not imply perfectly uniform local calibration.
 
-The final XGBoost residuals showed little immediate dependence:
+These relationships should be interpreted as predictive rather than causal. Temperature, season and related weather variables help identify periods when demand is more difficult to forecast, but this analysis does not isolate the causal effect of any individual factor. Other influences—such as precipitation, irrigation behavior, holidays, changing customer behavior or variables not available in the public data—may contribute to the same patterns.
 
-- lag-one residual autocorrelation: 0.008
-- lag-seven residual autocorrelation: 0.109
-
-Longer-range structure remained at 14 and 28 days. The final residuals should not be treated as completely independent.
+Taken together, the point and probabilistic forecasts provide two complementary pieces of information: an estimate of likely daily demand and an indication of when that estimate should be treated with more or less uncertainty. The conditional quantile model captures much of the changing forecast difficulty directly, while sequential conformal calibration provides an additional safeguard when recent forecast errors suggest that those uncertainty estimates have become too optimistic or conservative.
 
 ## Repository structure
 
@@ -343,7 +364,8 @@ municipal-water-demand-forecasting/
 │   ├── figures/
 │   ├── probabilistic/
 │   │   ├── calibration/
-│   │   └── interpretation/
+│   │   ├── interpretation/
+│   │   └── final_holdout/
 │   ├── final_holdout_metrics.csv
 │   ├── final_holdout_predictions.csv
 │   └── final_holdout_evaluation.json
@@ -373,8 +395,11 @@ The principal analysis files are:
   Sequential conformal calibration, window-length selection and comparison of rolling CQR, ACI and conformal PID.
 
 - [`notebooks/05_interpreting_probabilistic_forecasts.ipynb`](notebooks/05_interpreting_probabilistic_forecasts.ipynb)  
-  Interpretation of the selected QR + ACI system across weather, demand and high-uncertainty regimes.
+  Interpretation of the selected QR + ACI system across weather and seasonal regimes, followed by the final April 2025–March 2026 out-of-sample probabilistic evaluation.
 
+- [`notebooks/06_readme_visualizations.ipynb`](notebooks/06_readme_visualizations.ipynb)  
+  Reproducible generation of the polished figures used throughout this README.
+  
 Supporting project files include:
 
 - [`config/modeling.yml`](config/modeling.yml)  
@@ -390,7 +415,10 @@ Supporting project files include:
   Final point-model metrics.
 
 - [`reports/final_holdout_predictions.csv`](reports/final_holdout_predictions.csv)  
-  Daily observations and forecasts for the original untouched holdout.
+  Daily observations and point forecasts for the April 2025–March 2026 final point-model holdout.
+
+- [`reports/probabilistic/final_holdout/`](reports/probabilistic/final_holdout/)  
+  Daily forecasts, interval summaries, rolling diagnostics and seasonal results from the final probabilistic evaluation.
 
 ## Reproducing the analysis
 
@@ -420,26 +448,25 @@ After building the processed dataset, run the analysis notebooks in order:
 5. `notebooks/05_interpreting_probabilistic_forecasts.ipynb`
 
 The point-forecasting holdout outputs are stored directly under `reports/`.
-Probabilistic calibration and interpretation summaries are stored under
-`reports/probabilistic/`.
+Probabilistic model-selection and calibration outputs are stored under
+`reports/probabilistic/calibration/`, interpretation outputs under
+`reports/probabilistic/interpretation/`, and the final out-of-sample probabilistic
+evaluation under `reports/probabilistic/final_holdout/`.
 
-README figures can be regenerated separately with
+README figures can be regenerated after the analysis is complete with
 `notebooks/06_readme_visualizations.ipynb`.
 
 ## Project status
 
 The current point-forecasting and probabilistic-forecasting analyses are complete.
 
-The original final holdout has been opened and will not be reused for further feature
-selection, hyperparameter tuning or model comparison. The subsequent probabilistic
-analysis is treated as new work and uses earlier chronological out-of-fold forecasts
-rather than retroactively modifying the reported holdout result.
+The April 2025–March 2026 period has now been used for the final point-forecasting evaluation and, after all probabilistic modeling and calibration choices were fixed, for a separate final out-of-sample probabilistic evaluation. It will not be reused for additional feature selection, hyperparameter tuning, calibration-method selection or model comparison.
 
 Potential extensions include:
 
 - archived one-day-ahead weather forecasts
 - dynamic blending of persistence and XGBoost
-- explicit transition or regime-switching models
+- explicit transition-day or regime-switching models
 - multi-step or hourly probabilistic forecasting
 - evaluation on another municipal water system
 - an interactive forecasting and conservation dashboard
@@ -448,8 +475,10 @@ Potential extensions include:
 
 This project reinforced an important forecasting lesson for me: a more flexible model does not need to win every day to be useful.
 
-Previous-day persistence remains extremely effective when demand is stable. The nonlinear model provides its greatest value during high-demand periods and substantial transitions, even though those periods also contain its largest remaining errors.
+Previous-day persistence remains extremely difficult to beat when demand is stable. XGBoost provides its greatest value during high-demand periods and substantial transitions, even though those same periods contain some of its largest remaining errors. Looking only at average performance would have hidden that distinction.
 
-That distinction between average performance, operational value and model limitations became one of the most useful findings of the project.
+The probabilistic analysis added a related lesson. A useful uncertainty estimate requires more than attaching a fixed margin around a point forecast. Quantile regression captured much of the way forecast difficulty changes with weather and season, while sequential conformal calibration responded when recent forecast errors showed that those conditional intervals had become too optimistic or conservative.
 
-The probabilistic extension added a related lesson: weather information can help describe not only the expected level of demand, but also when a forecast should be treated with greater or lesser uncertainty.
+I found that division of labor particularly useful. The underlying model describes what can be learned from the available predictors; the calibration layer provides a way to respond when recent performance indicates that the model's uncertainty estimates are no longer adequate.
+
+More broadly, the project reinforced the value of beginning with simple baselines, evaluating chronologically and treating model limitations as part of the result rather than something to hide. The final system is not uniformly best in every regime and its probabilistic coverage is not perfectly constant through time, but those limitations help identify where additional data, better weather information or different modeling assumptions would be most valuable.
