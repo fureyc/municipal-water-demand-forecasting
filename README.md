@@ -1,9 +1,10 @@
 # Municipal Water Demand Forecasting
+
 A reproducible one-day-ahead forecasting project combining Fort Collins water-demand data with NOAA weather observations.
 
-The final XGBoost point forecast achieved a holdout mean absolute error of **0.876 million gallons per day**, improving on previous-day persistence by **31.8%** and ridge regression by **11.8%**.
+The final XGBoost point forecast achieved a mean absolute error of **0.876 million gallons per day** on the April 2025–March 2026 holdout, improving on previous-day persistence by **31.8%** and ridge regression by **11.8%**.
 
-I then extended the project to probabilistic forecasting. A linear quantile-regression model combined with sequential conformal calibration produced **78.6% empirical coverage** for a nominal 80% interval during the final April 2025–March 2026 out-of-sample probabilistic evaluation.
+The project was also extended to probabilistic forecasting. Linear quantile regression combined with sequential conformal calibration achieved **78.6% empirical coverage** for a nominal 80% interval over the same evaluation year.
 
 ## Overview
 
@@ -15,11 +16,11 @@ This project asks a practical forecasting question:
 
 I developed the project as an application of statistical modeling and time-series forecasting to a water-management problem. I was interested not only in whether a more flexible model could improve forecast accuracy, but also in when it helped and where it still failed.
 
-The project uses public data and chronological validation throughout. Point-model features, model families and hyperparameters were fixed before the original final holdout was viewed. The later probabilistic system was developed separately using earlier chronological forecasts, with its quantile-regression and calibration choices fixed before the final out-of-sample probabilistic evaluation.
+The project uses public data and chronological validation throughout. Model features, model families and hyperparameters were fixed before the original final holdout was viewed. The later probabilistic system was developed separately using earlier chronological forecasts, with its quantile regression and calibration choices fixed before the final out-of-sample probabilistic evaluation.
 
 ## Why I built this project
 
-My academic work has focused on machine learning, uncertainty quantification and scalable numerical methods. I built this project to explore how those skills could be applied to a practical utility-planning problem.
+My academic work has focused on scalable numerical methods for machine learning and uncertainty quantification. I built this project to explore how those skills could be applied to a practical utility-planning problem.
 
 Public water-system reports often distinguish between observed demand and weather-normalized demand. That raised several related questions for me:
 
@@ -66,7 +67,7 @@ data/processed/fort_collins_daily_water_weather.csv
 
 All evaluation is chronological, using an **expanding-window rolling-validation design**.
 
-For the point-forecasting analysis, the data were divided into three stages:
+For the forecasting analysis, the data were divided into three stages:
 
 | Stage               | Period                  | Purpose                                   |
 | ------------------- | ----------------------- | ----------------------------------------- |
@@ -80,30 +81,27 @@ The rolling-validation stage contains nine quarterly validation folds. In each f
 
 *Expanding-window validation. The training window grows after each quarterly validation fold, while the final holdout remains untouched throughout point-model development.*
 
-The final holdout was not used to choose point-forecasting features, model families or hyperparameters. After the validation analysis was completed, each final point model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
+The final holdout was not used to choose forecasting features, model families or hyperparameters. After the validation analysis was completed, each final model was fitted once using all available data through March 31, 2025 and evaluated on the following 365 days.
 
-The probabilistic-forecasting extension was developed separately using chronological out-of-fold forecasts from January 2023 through March 2025. The quantile-regression specification, conformal-calibration method, 180-day conformity-score history and ACI adaptation rate were all fixed before probabilistic performance was examined over April 2025–March 2026. Because that same calendar period had already been inspected during the point-forecasting analysis, I describe this as a final out-of-sample probabilistic evaluation rather than as a newly untouched holdout.
+The probabilistic-forecasting extension was developed separately using chronological out-of-fold forecasts from January 2023 through March 2025. The quantile regression specification, conformal-calibration method, 180-day conformity score history and ACI adaptation rate were all fixed before performance was examined over April 2025–March 2026.
 
-For point forecasts, I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
+To evaluate forecast accuracy, I use **mean absolute error (MAE)** as the primary metric because it measures the typical forecast error directly in million gallons per day, making the result easy to interpret on the same scale as the forecasting problem. **Root mean squared error (RMSE)** is reported as a secondary metric because its greater sensitivity to large errors helps reveal whether improvements in average accuracy come at the cost of occasional large misses. **Mean absolute percentage error (MAPE)** provides an additional percentage-scale summary. Using these complementary measures follows standard forecasting practice ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/accuracy.html)).
 
 For probabilistic forecasts, I focus on **empirical interval coverage** relative to the nominal 80% target together with **interval width**, lower- and upper-tail miss rates and quantile pinball loss. Coverage measures calibration, while interval width helps distinguish useful calibration from intervals that achieve coverage simply by becoming excessively wide.
 
 ## Models compared
 
-I began with simple benchmarks before introducing additional model flexibility.
+I began with simple benchmarks before introducing additional model flexibility. Previous-day persistence provides the baseline, while ordinary least squares (OLS) provides the first fitted linear benchmark for combining recent demand, calendar effects and lagged weather. I then considered two linear alternatives to the OLS baseline: principal component regression, which removes selected low-variance directions, and ridge regression, which shrinks unstable directions rather than discarding them. This allowed me to test whether greater numerical stability translated into better forecast accuracy.
 
 | Model                    | Role                                                    |
 | ------------------------ | ------------------------------------------------------- |
 | Previous-day persistence | Operational baseline: tomorrow equals today             |
-| Ridge-regression         | Regularized linear benchmark                            |
+| Ridge regression         | Regularized linear benchmark                            |
 | XGBoost                  | Nonlinear model for thresholds and feature interactions |
 
-Previous-day persistence establishes whether a fitted model improves on the strong short-term dependence already present in water demand. Ridge-regression then provides a relatively simple benchmark for combining recent demand, calendar effects and lagged weather. Comparing these models with XGBoost tests whether allowing nonlinear relationships and interactions provides meaningful additional predictive value. Regression models are a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
+The final comparison asks whether a nonlinear model can improve on both a strong persistence baseline and a regularized linear model. XGBoost allows thresholds, nonlinear relationships and feature interactions that the linear models cannot represent directly. Regression models provide a standard starting point for incorporating predictor information into time-series forecasts ([Hyndman & Athanasopoulos, 2021](https://otexts.com/fpp3/forecasting-regression.html)).
 
-Principal component regression was also evaluated. Truncating low-variance directions consistently reduced forecast accuracy and so was not retained as a separate final model.
-
-Ridge regularization produced only a small improvement in average error, but it substantially improved coefficient stability in the broader feature matrix.
-
+PCR truncation consistently reduced forecast accuracy and therefore did not provide a distinct final model. Ridge regularization retained the full feature space and produced a small improvement in average error while improving coefficient stability.
 
 ## Feature set
 
@@ -120,16 +118,16 @@ Two related feature matrices were used during model development.
 
 All lagged and rolling variables are shifted so that no forecast uses future information.
 
-Unless otherwise noted, the final ridge-regression and XGBoost results reported below use Matrix B.
+Unless otherwise noted, the final ridge regression and XGBoost results reported below use Matrix B.
 
-The final XGBoost specification was selected during rolling validation and was not altered after the holdout was opened.
+The final XGBoost specification was selected during rolling validation and then fixed before the final evaluation on the holdout data.
 
 ## Final holdout results
 
 | Model | MAE (MGD) | RMSE (MGD) | MAPE |
 |---|---:|---:|---:|
 | Previous-day persistence | 1.284 | 1.849 | 6.14% |
-| Ridge-regression | 0.994 | 1.340 | 5.32% |
+| Ridge regression | 0.994 | 1.340 | 5.32% |
 | **XGBoost** | **0.876** | **1.245** | **4.60%** |
 
 The selected XGBoost model reduced holdout MAE by:
@@ -145,18 +143,9 @@ It produced lower daily absolute error than ridge on approximately 61% of holdou
 
 ## Validation and holdout consistency
 
-XGBoost's rolling-validation MAE was 0.838 MGD. Its final holdout MAE was 0.876 MGD, an increase of approximately 4.5%.
+XGBoost's rolling-validation MAE was 0.838 MGD. Its final holdout MAE was 0.876 MGD, an increase of approximately 4.5%. RMSE was effectively unchanged, remaining 1.245 MGD to three decimal places in both rolling validation and the final holdout.
 
-Its RMSE was effectively unchanged on the final holdout, remaining 1.245 MGD to three decimal places:
-
-| Evaluation stage | XGBoost RMSE |
-|---|---:|
-| Rolling validation | 1.245 MGD |
-| Final holdout | 1.245 MGD |
-
-The similarity between validation and holdout performance suggests that the chronological validation procedure provided a realistic estimate of final generalization error.
-
-The model's 90th-percentile, 95th-percentile and maximum absolute errors were also lower on the holdout than during rolling validation.
+The similarity between validation and holdout performance suggests that the chronological validation procedure provided a realistic estimate of final generalization error. The model's 90th-percentile, 95th-percentile and maximum absolute errors were also lower on the holdout than during rolling validation.
 
 ## Forecast behavior over the holdout year
 
@@ -169,21 +158,25 @@ The seasonal difference in forecast error reflects an important feature of the u
 Summer is therefore the most difficult season in absolute terms. XGBoost's summer MAE was 1.207 MGD, compared with 0.636 MGD during winter.
 However, summer is also where the model provides some of its greatest value. XGBoost improved on persistence by approximately 47% during summer and by more than 48% in both July and August.
 
-## What the model learned
+## What drives the forecasts
 
-The feature analysis supports a consistent predictive interpretation.
+I use two complementary measures to understand which predictors drive the forecasts. **Tree gain** is XGBoost's built-in importance measure and summarizes how much splits involving a feature improve the training objective. Because the final selected model is a nonlinear tree ensemble, I also use SHAP, a widely used model-interpretability method that estimates how individual features contribute to predictions from nonlinear models.
 
-### Recent demand is the forecast anchor
+Within each rolling-validation fold, SHAP values were computed for the held-out validation observations using the model fitted on the preceding training data. This means the SHAP analysis reflects model behavior on observations that were not used to fit the corresponding fold-specific model. This provides a useful complement to tree gain: gain reflects how features were used while fitting the model, while the validation SHAP analysis examines how those features contributed to predictions on subsequent, unseen observations.
 
-Previous-day demand is the dominant feature under both tree gain and out-of-fold SHAP importance. SHAP helps explain the model's forecasts by measuring how much each feature tends to influence its predictions; using out-of-fold observations makes this a check on behavior outside the data used for fitting. Two-day demand, seven-day demand and short rolling means provide additional information about the recent demand level.
+### Recent demand anchors the forecast
 
-### Calendar information provides context
+Previous-day demand is the dominant feature under both tree gain and held-out SHAPimportance. The agreement between the training-based and validation-based measures provides especially strong evidence that recent demand is the model's primary forecast anchor. Two-day demand, seven-day demand and short rolling means provide additional information about the recent demand level.
 
-Annual seasonal terms and weekday indicators help distinguish similar recent demand values occurring at different points in the year or week.
+### Calendar effects provide context
 
-### Weather improves the operational forecast
+Calendar variables also appear in both importance measures, although several (particularly annual seasonal terms and some weekday indicators) receive greater prominence under SHAP than under tree gain. These variables help distinguish similar recent demand values occurring at different points in the year or week, providing context that is not fully captured by recent consumption alone.
 
-Adding lagged weather to calendar and demand-history features reduced rolling-validation XGBoost MAE from approximately 0.906 to 0.838 MGD, an improvement of about 7.4%.
+### Weather adds predictive value
+
+Weather variables also appear prominently under both tree gain and held-out SHAP importance. Lagged temperature and precipitation are among the leading weather predictors under both measures, suggesting that weather signal identified during model fitting also contributes meaningfully to predictions on held-out validation observations.
+
+The stronger evidence comes from the fixed feature-block ablation. Adding lagged weather to calendar and demand-history features reduced rolling-validation XGBoost MAE from approximately **0.906 to 0.838 MGD**, an improvement of about **7.4%**. This confirms that weather provides incremental predictive information beyond recent demand and calendar effects.
 
 The weather-block analysis found that:
 
@@ -241,7 +234,7 @@ The broader matrix nevertheless improved prediction. Ridge regularization reduce
 
 ### Principal component regression
 
-PCR truncation did not improve validation performance. Even specifications retaining more than 99% of predictor variance performed worse than full ordinary least squares.
+PCR truncation did not improve validation performance. Even specifications retaining more than 99% of predictor variance performed worse than full OLS.
 
 This indicates that several low-variance directions contained useful predictive information. Predictor variance alone was therefore not a reliable feature-selection criterion.
 
