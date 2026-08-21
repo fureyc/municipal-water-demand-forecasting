@@ -458,7 +458,7 @@ README figures can be regenerated after the analysis is complete with
 
 The current point-forecasting and probabilistic-forecasting analyses are complete.
 
-The April 2025–March 2026 period has now been used for the final point-forecasting evaluation and, after all probabilistic modeling and calibration choices were fixed, for a separate final out-of-sample probabilistic evaluation. It will not be reused for additional feature selection, hyperparameter tuning, calibration-method selection or model comparison.
+The April 2025–March 2026 period has now been used for the final forecasting evaluation and, after all probabilistic modeling and calibration choices were fixed, for a separate final out-of-sample probabilistic evaluation.
 
 Potential extensions include:
 
@@ -477,6 +477,6 @@ Previous-day persistence remains extremely difficult to beat when demand is stab
 
 The probabilistic analysis added a related lesson. A useful uncertainty estimate requires more than attaching a fixed margin around a point forecast. Quantile regression captured much of the way forecast difficulty changes with weather and season, while sequential conformal calibration responded when recent forecast errors showed that those conditional intervals had become too optimistic or conservative.
 
-I found that division of labor particularly useful. The underlying model describes what can be learned from the available predictors; the calibration layer provides a way to respond when recent performance indicates that the model's uncertainty estimates are no longer adequate.
+I found that division of labor interesting. The underlying model describes what can be learned from the available predictors and calibration provides a way to respond when recent performance indicates that the model's uncertainty estimates are no longer adequate.
 
-More broadly, the project reinforced the value of beginning with simple baselines, evaluating chronologically and treating model limitations as part of the result rather than something to hide. The final system is not uniformly best in every regime and its probabilistic coverage is not perfectly constant through time, but those limitations help identify where additional data, better weather information or different modeling assumptions would be most valuable.
+More broadly, the project reinforced the value of beginning with simple baselines and treating model limitations as part of the result rather than something to hide. XGBoost is not uniformly best in every demand regime, and the adaptive conformal prediction intervals do not maintain constant coverage through time. These limitations help identify where additional data, better weather information or different modeling assumptions may be most valuable.
